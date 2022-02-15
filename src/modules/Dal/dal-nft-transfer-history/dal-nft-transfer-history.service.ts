@@ -24,12 +24,35 @@ export class DalNFTTransferHistoryService {
   async createERC721NFTTransferHistoryBatch(
     transferHistory: CreateNFTTransferHistoryDto[],
   ): Promise<void> {
-    this.logger.log(`Bulk write ${transferHistory.length} transfer histories`);
+    this.logger.log(
+      `Bulk write ${transferHistory.length} ERC721 transfer histories`,
+    );
     await this.nftTransferHistoryModel.bulkWrite(
       transferHistory.map((x) => ({
         updateOne: {
           filter: {
-            erc721Tokenid: x.erc721TokenId,
+            erc721TokenId: x.erc721TokenId,
+            contractAddress: x.contractAddress,
+            hash: x.hash,
+          },
+          update: { $set: x },
+          upsert: true,
+        },
+      })),
+    );
+  }
+
+  async createCryptoPunksNFTTransferHistoryBatch(
+    transferHistory: CreateNFTTransferHistoryDto[],
+  ): Promise<void> {
+    this.logger.log(
+      `Bulk write ${transferHistory.length} CryptoPunks transfer histories`,
+    );
+    await this.nftTransferHistoryModel.bulkWrite(
+      transferHistory.map((x) => ({
+        updateOne: {
+          filter: {
+            'cryptopunks.punkIndex': x.cryptopunks.punkIndex,
             contractAddress: x.contractAddress,
             hash: x.hash,
           },
@@ -43,7 +66,9 @@ export class DalNFTTransferHistoryService {
   async createERC1155NFTTransferHistoryBatch(
     transferHistory: CreateNFTTransferHistoryDto[],
   ): Promise<void> {
-    this.logger.log(`Bulk write ${transferHistory.length} transfer histories`);
+    this.logger.log(
+      `Bulk write ${transferHistory.length} ERC1155 transfer histories`,
+    );
 
     await this.nftTransferHistoryModel.bulkWrite(
       transferHistory.map((x) => {

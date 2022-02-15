@@ -2,11 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token.service';
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
+import { Handler } from '../tokens-handler/interfaces/tokens.interface';
 import ERC1155TokenAnalyser from './erc1155token.analyser';
 import ERC1155TokenFecther from './erc1155token.fetcher';
 
 @Injectable()
-export default class ERC1155TokenHandler {
+export default class ERC1155TokenHandler implements Handler {
   private readonly logger = new Logger(ERC1155TokenHandler.name);
   private readonly analayser: ERC1155TokenAnalyser;
   private readonly fetcher: ERC1155TokenFecther;

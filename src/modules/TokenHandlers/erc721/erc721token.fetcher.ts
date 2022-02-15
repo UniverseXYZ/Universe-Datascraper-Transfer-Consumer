@@ -1,16 +1,16 @@
 import { Logger } from '@nestjs/common';
+import { Owner } from 'datascraper-schema';
 import { ethers } from 'ethers';
 import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
-import { SizeExceedError } from 'src/modules/Infra/ethereum/ethereum.types';
+import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
   Token,
-  TokenFetcher,
+  TokenTransferFetcher,
   TransferHistory,
-  TransferHistoryError,
-} from 'src/modules/Infra/ethereum/interface';
+} from '../tokens-handler/interfaces/tokens.interface';
 
-export default class ERC721TokenFecther implements TokenFetcher {
+export default class ERC721TokenFecther implements TokenTransferFetcher {
   private ether: ethers.providers.BaseProvider;
   private readonly logger = new Logger(ERC721TokenFecther.name);
 
@@ -51,10 +51,17 @@ export default class ERC721TokenFecther implements TokenFetcher {
           groupedTransferHistory[x.tokenId] as TransferHistory[]
         ).sort((a, b) => b.blockNum - a.blockNum);
 
+        const owner = {
+          address: sortedHistories[sortedHistories.length - 1].to, // last transfer history's toAddress
+          transactionHash: sortedHistories[sortedHistories.length - 1].hash,
+          value: 1,
+        } as Owner;
+
         return {
           ...x,
+          blockNumber: sortedHistories[sortedHistories.length - 1].blockNum,
           firstOwner: x.toAddress,
-          latestOwner: sortedHistories[sortedHistories.length - 1].to, // last transfer history's toAddress
+          owners: [owner],
         } as Token;
       });
 
@@ -66,7 +73,7 @@ export default class ERC721TokenFecther implements TokenFetcher {
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
-      this.handleSizeExceed(error);
+      handleSizeExceed(error);
     }
   }
 
@@ -103,10 +110,6 @@ export default class ERC721TokenFecther implements TokenFetcher {
     return grouped;
   }
 
-  private numberRange(start: number, end: number) {
-    return [...Array(end - start + 1)].map((_, i) => start + i);
-  }
-
   private async getTokens(results: ethers.Event[]) {
     return results
       .filter((x) => x.args['_from'] == ethers.constants.AddressZero)
@@ -128,26 +131,10 @@ export default class ERC721TokenFecther implements TokenFetcher {
       hash: x.transactionHash,
       from: x.args['_from'],
       to: x.args['_to'],
+      tokenId: parseInt(x.args['_tokenId']['_hex']).toString(),
+      value: 1,
       erc721TokenId: parseInt(x.args['_tokenId']['_hex']).toString(),
       category: 'ERC721',
     }));
-  }
-
-  private handleSizeExceed(error: any) {
-    if (error.body) {
-      //infura and alchemy does this way
-      const errorBody = JSON.parse(error.body);
-      const transferHistoryError = errorBody.error as TransferHistoryError;
-      if (
-        transferHistoryError.message.includes('size exceeded') ||
-        transferHistoryError.message.includes('more than 10000 results')
-      ) {
-        throw new SizeExceedError('please split the block size');
-      }
-    }
-    if (error.message && error.message.includes('failed to meet quorum')) {
-      //infura does this if requested block range is too big.
-      throw new SizeExceedError('please split the block size');
-    }
   }
 }

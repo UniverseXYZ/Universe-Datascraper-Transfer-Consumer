@@ -1,16 +1,21 @@
 import { Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
 import EthereumService from 'src/modules/infra/ethereum/ethereum.service';
-import { SizeExceedError } from 'src/modules/infra/ethereum/ethereum.types';
+import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
-  TokenFetcher,
+  TokenTransferFetcher,
   Token,
   TransferHistory,
-  TransferHistoryError,
-} from 'src/modules/infra/ethereum/interface';
+} from '../tokens-handler/interfaces/tokens.interface';
 
-// This handler is only for Opensea ERC1155 token at the moment
-export default class ERC1155TokenFetcher implements TokenFetcher {
+// This handler can fetch the following types of tokens
+// 1. No explicit mint method. E.g. Opensea ERC1155 token.
+//    The NFT gets created by the off-chain order, which does not transfer from zero address.
+//    The NFT can only be caught from the first transfer event.
+// 2. Standard ERC1155 token with explicit mint method,
+//    which transfer the first NFT token from zero address to first owner.
+//    E.g.Using OpenZeppelin to create ERC1155 token.
+export default class ERC1155TokenFetcher implements TokenTransferFetcher {
   private ether: ethers.providers.BaseProvider;
   private readonly logger = new Logger(ERC1155TokenFetcher.name);
 
@@ -45,7 +50,7 @@ export default class ERC1155TokenFetcher implements TokenFetcher {
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
-      this.handleSizeExceed(error);
+      handleSizeExceed(error);
     }
   }
 
@@ -170,6 +175,7 @@ export default class ERC1155TokenFetcher implements TokenFetcher {
       hash: x.transactionHash,
       from: x.args['_from'],
       to: x.args['_to'],
+      tokenId: ethers.BigNumber.from(x.args['_id']).toString(),
       erc1155Metadata: {
         tokenId: ethers.BigNumber.from(x.args['_id']).toString(),
         value: ethers.BigNumber.from(x.args['_value']).toNumber(),
@@ -220,23 +226,5 @@ export default class ERC1155TokenFetcher implements TokenFetcher {
         category: 'ERC1155',
       })),
     );
-  }
-
-  private handleSizeExceed(error: any) {
-    if (error.body) {
-      //infura and alchemy does this way
-      const errorBody = JSON.parse(error.body);
-      const transferHistoryError = errorBody.error as TransferHistoryError;
-      if (
-        transferHistoryError.message.includes('size exceeded') ||
-        transferHistoryError.message.includes('more than 10000 results')
-      ) {
-        throw new SizeExceedError('please split the block size');
-      }
-    }
-    if (error.message && error.message.includes('failed to meet quorum')) {
-      //infura does this if requested block range is too big.
-      throw new SizeExceedError('please split the block size');
-    }
   }
 }

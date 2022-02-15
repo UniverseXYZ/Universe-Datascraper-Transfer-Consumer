@@ -16,9 +16,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { DalNFTCollectionTaskService } from '../Dal/dal-nft-collection-task/dal-nft-collection-task.service';
 import { MessageStatus } from '../Dal/dal-nft-collection-task/schemas/nft-collection-task.schema';
-import { SizeExceedError } from '../Infra/ethereum/ethereum.types';
 import https from 'https';
 import TokensHandler from '../TokenHandlers/tokens-handler/tokens.handler';
+import { SizeExceedError } from '../TokenHandlers/tokens-handler/interfaces/tokens.interface';
 
 @Injectable()
 export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -114,7 +114,12 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     const { contractAddress, startBlock, endBlock, tokenType } =
       receivedMessage;
 
-    this.tokensHandler.start(contractAddress, startBlock, endBlock, tokenType);
+    await this.tokensHandler.start(
+      contractAddress,
+      startBlock,
+      endBlock,
+      tokenType,
+    );
   }
 
   onError(error: Error, message: AWS.SQS.Message) {
@@ -158,6 +163,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.error,
+        errorMessage: error.message || JSON.stringify(error),
       });
     }
     this.deleteMessage(message);
