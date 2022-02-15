@@ -3,28 +3,28 @@ import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { Handler } from '../tokens-handler/interfaces/tokens.interface';
-import ERC721TokenAnalyser from './erc721token.analyser';
-import ERC721TokenFecther from './erc721token.fetcher';
+import CryptoPunksTokenAnalyser from './cryptopunks.analyser';
+import CryptoPunksTokenFecther from './cryptopunks.fetcher';
 
 @Injectable()
-export default class ERC721TokenHandler implements Handler {
-  private readonly logger = new Logger(ERC721TokenHandler.name);
-  private readonly analayser: ERC721TokenAnalyser;
-  private readonly fetcher: ERC721TokenFecther;
+export default class CryptoPunksTokenHandler implements Handler {
+  private readonly logger = new Logger(CryptoPunksTokenHandler.name);
+  private readonly analayser: CryptoPunksTokenAnalyser;
+  private readonly fetcher: CryptoPunksTokenFecther;
 
   constructor(
     private readonly ethereumService: EthereumService,
     private readonly nftTokenService: DalNFTTokensService,
     private readonly nftTransferHistoryService: DalNFTTransferHistoryService,
   ) {
-    this.fetcher = new ERC721TokenFecther(this.ethereumService);
-    this.analayser = new ERC721TokenAnalyser(this.nftTokenService);
+    this.fetcher = new CryptoPunksTokenFecther(this.ethereumService);
+    this.analayser = new CryptoPunksTokenAnalyser(this.nftTokenService);
   }
 
   async handle(contractAddress: string, startBlock: number, endBlock: number) {
     // Get 1155 tranfer history and tokens
-    const { tokens, transferHistory } =
-      await this.fetcher.getTokensAndTransferHistory(
+    const { tokens, latestOwners, transferHistory } =
+      await this.fetcher.getTokensWithLatestOwnersAndTransferHistory(
         contractAddress,
         startBlock,
         endBlock,
@@ -34,7 +34,10 @@ export default class ERC721TokenHandler implements Handler {
       `Fetched transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
     );
     await this.analayser.handleUpcomingTokens(tokens);
-    await this.nftTransferHistoryService.createERC721NFTTransferHistoryBatch(
+    await this.nftTokenService.upsertLatestOwnersForCryptoPunksTokens(
+      latestOwners,
+    );
+    await this.nftTransferHistoryService.createCryptoPunksNFTTransferHistoryBatch(
       transferHistory,
     );
   }

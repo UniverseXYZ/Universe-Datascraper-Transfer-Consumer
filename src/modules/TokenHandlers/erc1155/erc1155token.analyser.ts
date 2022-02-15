@@ -5,9 +5,10 @@ import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token
 import {
   NFTToken,
   Owner,
-} from 'src/modules/DAL/dal-nft-token/schemas/nft-token.schema';
+} from 'src/modules/Dal/dal-nft-token/schemas/nft-token.schema';
+import { Analyser } from '../tokens-handler/interfaces/tokens.interface';
 
-export default class ERC1155TokenAnalyser {
+export default class ERC1155TokenAnalyser implements Analyser {
   private readonly logger = new Logger(ERC1155TokenAnalyser.name);
 
   constructor(private readonly nftTokensService: DalNFTTokensService) {}
@@ -23,7 +24,7 @@ export default class ERC1155TokenAnalyser {
     await this.nftTokensService.updateTokens(toBeUpdatedTokens);
   }
 
-  async analyseUpcomingTokens(tokens: CreateNFTTokenDto[]) {
+  private async analyseUpcomingTokens(tokens: CreateNFTTokenDto[]) {
     //query all the tokens that have the same contract address and tokenId
     const existingTokens =
       await this.nftTokensService.getExistingTokensByContractAddressAndTokenId(
@@ -49,8 +50,7 @@ export default class ERC1155TokenAnalyser {
           this.buildToBeUpdatedToken(existingToken, groupedTokens),
         );
       } else {
-        //    else
-        //      need to insert the token
+        // need to insert the token
         if (groupedTokens.length === 1) {
           // if there is only one token, this is a new token
           toBeInsertedTokens.push({

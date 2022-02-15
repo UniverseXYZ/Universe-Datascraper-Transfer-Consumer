@@ -6,10 +6,10 @@ export interface CreateNFTTokenDto {
   tokenId: string;
   tokenType: string;
   firstOwner?: string;
+  owners?: Owner[];
   //for erc1155
   fromAddress?: string;
   toAddress?: string;
   value?: number;
   transactionHash?: string;
-  owners?: Owner[];
 }

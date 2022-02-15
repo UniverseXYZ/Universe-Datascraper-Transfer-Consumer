@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { LatestOwner } from 'src/modules/TokenHandlers/tokens-handler/interfaces/tokens.interface';
 import { CreateNFTTokenDto } from './dto/create-nft-token.dto';
 import { NFTToken, NFTTokensDocument } from './schemas/nft-token.schema';
 
@@ -13,7 +14,7 @@ export class DalNFTTokensService {
   ) {}
 
   //ERC721 is non fungible token which only has one tokenId
-  async upsertNFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
+  async upsertERC721NFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} ERC721 tokens`);
     await this.nfttokensModel.bulkWrite(
       tokens.map((x) => ({
@@ -26,9 +27,54 @@ export class DalNFTTokensService {
     );
   }
 
+  //CryptoPunks is non fungible token which only has one tokenId
+  async upsertCryptoPunksNFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
+    this.logger.log(`Bulk write ${tokens.length} CryptoPunks tokens`);
+    await this.nfttokensModel.bulkWrite(
+      tokens.map((x) => ({
+        updateOne: {
+          filter: {
+            contractAddress: x.contractAddress,
+            tokenId: x.tokenId,
+          },
+          update: { ...x },
+          upsert: true,
+        },
+      })),
+    );
+  }
+
+  async upsertLatestOwnersForCryptoPunksTokens(latestOwner: LatestOwner[]) {
+    this.logger.log(`Upserting ${latestOwner.length} latest owners`);
+    await this.nfttokensModel.bulkWrite(
+      latestOwner.map((x) => ({
+        updateOne: {
+          filter: { contractAddress: x.contractAddress, tokenId: x.tokenId },
+          update: {
+            $set: {
+              tokenType: 'CryptoPunks',
+              // CryptoPunks only update one owner at a time
+              owners: [
+                {
+                  address: x.ownerAddress,
+                  transactionHash: x.hash,
+                  value: 1,
+                },
+              ],
+            },
+          },
+          upsert: true,
+        },
+      })),
+    );
+  }
+
   async getExistingTokensByContractAddressAndTokenId(
     tokens: CreateNFTTokenDto[],
   ): Promise<NFTToken[]> {
+    if (tokens?.length === 0) {
+      return [];
+    }
     //build query
     const query = {
       $or: tokens.map((x) => ({
