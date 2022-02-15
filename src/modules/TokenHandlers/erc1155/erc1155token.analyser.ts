@@ -5,7 +5,7 @@ import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token
 import {
   NFTToken,
   Owner,
-} from 'src/modules/DAL/dal-nft-token/schemas/nft-token.schema';
+} from 'src/modules/Dal/dal-nft-token/schemas/nft-token.schema';
 import { Analyser } from '../tokens-handler/interfaces/tokens.interface';
 
 export default class ERC1155TokenAnalyser implements Analyser {

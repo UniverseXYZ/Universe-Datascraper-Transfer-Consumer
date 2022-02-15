@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
-import EthereumService from 'src/modules/infra/ethereum/ethereum.service';
+import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
   TokenTransferFetcher,
