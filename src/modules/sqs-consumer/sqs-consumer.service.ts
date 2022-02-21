@@ -122,27 +122,33 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  onError(error: Error, message: AWS.SQS.Message) {
+  async onError(error: Error, message: AWS.SQS.Message) {
     this.logger.log(`SQS error ${error.message}`);
-    this.handleError(error, message);
+    await this.handleError(error, message, 'SQS');
   }
 
-  onProcessingError(error: Error, message: AWS.SQS.Message) {
+  async onProcessingError(error: Error, message: AWS.SQS.Message) {
     this.logger.log(`Processing error ${error.message}`);
-    this.handleError(error, message);
+    await this.handleError(error, message, 'Processing');
   }
 
-  onTimeoutError(error: Error, message: AWS.SQS.Message) {
+  async onTimeoutError(error: Error, message: AWS.SQS.Message) {
     this.logger.log(`Timeout error ${error.message}`);
-    this.handleError(error, message);
+    await this.handleError(error, message, 'Timeout');
   }
 
-  onMessageProcessed(message: AWS.SQS.Message) {
-    this.nftCollectionTaskService.removeNFTCollectionTask(message.MessageId);
+  async onMessageProcessed(message: AWS.SQS.Message) {
+    await this.nftCollectionTaskService.removeNFTCollectionTask(
+      message.MessageId,
+    );
     this.logger.log(`Messages ${message?.MessageId} have been processed `);
   }
 
-  private handleError(error: Error, message: AWS.SQS.Message) {
+  private async handleError(
+    error: Error,
+    message: AWS.SQS.Message,
+    type: string,
+  ) {
     const receivedMessage = JSON.parse(message.Body) as ReceivedMessage;
 
     const nftCollectionTask = {
@@ -154,19 +160,21 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
 
     if (error instanceof SizeExceedError) {
       //split status
-      this.nftCollectionTaskService.updateNFTCollectionTask({
+      await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
       });
     } else {
       //error status
-      this.nftCollectionTaskService.updateNFTCollectionTask({
+      await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.error,
-        errorMessage: error.message || JSON.stringify(error),
+        errorMessage:
+          `Error type: [${type}] - error.message` ||
+          `Error type: [${type}] - ${JSON.stringify(error)}`,
       });
     }
-    this.deleteMessage(message);
+    await this.deleteMessage(message);
   }
 
   private async deleteMessage(message: AWS.SQS.Message) {
