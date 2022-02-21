@@ -31,7 +31,7 @@ export class DalNFTTransferHistoryService {
       transferHistory.map((x) => ({
         updateOne: {
           filter: {
-            erc721TokenId: x.erc721TokenId,
+            tokenId: x.tokenId,
             contractAddress: x.contractAddress,
             hash: x.hash,
           },
@@ -52,7 +52,7 @@ export class DalNFTTransferHistoryService {
       transferHistory.map((x) => ({
         updateOne: {
           filter: {
-            'cryptopunks.punkIndex': x.cryptopunks.punkIndex,
+            tokenId: x.tokenId,
             contractAddress: x.contractAddress,
             hash: x.hash,
           },
@@ -80,7 +80,7 @@ export class DalNFTTransferHistoryService {
               contractAddress: x.contractAddress,
               hash: hash,
               category: 'ERC1155',
-              'erc1155Metadata.tokenId': x.erc1155Metadata.tokenId,
+              tokenId: x.tokenId,
             },
             update: { $set: { ...rest } },
             upsert: true,
