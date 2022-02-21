@@ -144,7 +144,7 @@ export default class CryptoPunksTokenFecther
         },
       ],
       toAddress: f.args['to'],
-      tokenId: parseInt(f.args['punkIndex']['_hex']).toString(),
+      tokenId: ethers.BigNumber.from(f.args['punkIndex']).toString(),
       tokenType: 'CryptoPunks',
     }));
   }
@@ -172,10 +172,10 @@ export default class CryptoPunksTokenFecther
       hash: x.transactionHash,
       from: x.args['from'],
       to: x.args['to'],
-      tokenId: parseInt(x.args['punkIndex']['_hex']).toString(),
+      tokenId: ethers.BigNumber.from(x.args['punkIndex']).toString(),
       value: 1,
       cryptopunks: {
-        punkIndex: parseInt(x.args['punkIndex']['_hex']).toString(),
+        punkIndex: ethers.BigNumber.from(x.args['punkIndex']).toString(),
       },
       category: 'CryptoPunks',
     }));
@@ -204,10 +204,10 @@ export default class CryptoPunksTokenFecther
       hash: x.transactionHash,
       from: x.args['fromAddress'],
       to: x.args['toAddress'],
-      tokenId: parseInt(x.args['punkIndex']['_hex']).toString(),
+      tokenId: ethers.BigNumber.from(x.args['punkIndex']).toString(),
       value: 1,
       cryptopunks: {
-        punkIndex: parseInt(x.args['punkIndex']['_hex']).toString(),
+        punkIndex: ethers.BigNumber.from(x.args['punkIndex']).toString(),
       },
       category: 'CryptoPunks',
     }));

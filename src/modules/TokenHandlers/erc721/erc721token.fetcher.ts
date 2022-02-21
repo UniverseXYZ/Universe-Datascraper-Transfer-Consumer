@@ -9,6 +9,7 @@ import {
   TokenTransferFetcher,
   TransferHistory,
 } from '../tokens-handler/interfaces/tokens.interface';
+import { getTokens, getTransferHistory } from './event-mapper';
 
 export default class ERC721TokenFecther implements TokenTransferFetcher {
   private ether: ethers.providers.BaseProvider;
@@ -41,11 +42,14 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
         `Got ${results.length} transfer events for contractAddress(${contractAddress}) between block(${startBlock}-${endBlock})`,
       );
 
-      const transferHistory = await this.getTransferHistory(results);
+      const transferHistory = await getTransferHistory(
+        contractAddress,
+        results,
+      );
       const groupedTransferHistory =
         this.groupTransferHistoryByTokenId(transferHistory);
 
-      const tokens = await this.getTokens(results);
+      const tokens = await getTokens(contractAddress, results);
       const tokensWithCurrentOwner = tokens.map((x) => {
         const sortedHistories = (
           groupedTransferHistory[x.tokenId] as TransferHistory[]
@@ -108,33 +112,5 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
     const grouped = groupByTokenId(transferHistories);
 
     return grouped;
-  }
-
-  private async getTokens(results: ethers.Event[]) {
-    return results
-      .filter((x) => x.args['_from'] == ethers.constants.AddressZero)
-      .map((f) => ({
-        contractAddress: f.address,
-        fromAddress: f.args['_from'],
-        toAddress: f.args['_to'],
-        tokenId: parseInt(f.args['_tokenId']['_hex']).toString(),
-        tokenType: 'ERC721',
-      }));
-  }
-
-  private async getTransferHistory(
-    results: ethers.Event[],
-  ): Promise<TransferHistory[]> {
-    return results.map((x) => ({
-      contractAddress: x.address,
-      blockNum: x.blockNumber,
-      hash: x.transactionHash,
-      from: x.args['_from'],
-      to: x.args['_to'],
-      tokenId: parseInt(x.args['_tokenId']['_hex']).toString(),
-      value: 1,
-      erc721TokenId: parseInt(x.args['_tokenId']['_hex']).toString(),
-      category: 'ERC721',
-    }));
   }
 }
