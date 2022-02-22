@@ -1,4 +1,5 @@
-import { ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
+import { decodeAddress } from 'src/utils/abiCoder';
 import { TransferHistory } from '../../tokens-handler/interfaces/tokens.interface';
 
 export const AXIE_CONTRACT_ADDRESS =
@@ -6,14 +7,11 @@ export const AXIE_CONTRACT_ADDRESS =
 
 export const getTokensForAxie = async (results: ethers.Event[]) => {
   return results
-    .filter((x) => utils.hexStripZeros(x.topics[1]) == '0x')
+    .filter((x) => decodeAddress(x.topics[1]) === ethers.constants.AddressZero)
     .map((f) => ({
       contractAddress: f.address,
-      fromAddress:
-        utils.hexStripZeros(f.topics[1]) === '0x'
-          ? ethers.constants.AddressZero
-          : utils.getAddress(utils.hexStripZeros(f.topics[1])),
-      toAddress: utils.getAddress(utils.hexStripZeros(f.topics[2])),
+      fromAddress: decodeAddress(f.topics[1]),
+      toAddress: decodeAddress(f.topics[2]),
       tokenId: ethers.BigNumber.from(f.data).toString(),
       tokenType: 'ERC721',
     }));
@@ -26,11 +24,8 @@ export const getTransferHistoryForAxie = async (
     contractAddress: x.address,
     blockNum: x.blockNumber,
     hash: x.transactionHash,
-    from:
-      utils.hexStripZeros(x.topics[1]) === '0x'
-        ? ethers.constants.AddressZero
-        : utils.getAddress(utils.hexStripZeros(x.topics[1])),
-    to: utils.getAddress(utils.hexStripZeros(x.topics[2])),
+    from: decodeAddress(x.topics[1]),
+    to: decodeAddress(x.topics[2]),
     tokenId: ethers.BigNumber.from(x.data).toString(),
     value: 1,
     erc721TokenId: ethers.BigNumber.from(x.data).toString(),

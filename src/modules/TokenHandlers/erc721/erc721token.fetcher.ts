@@ -49,7 +49,8 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
       const groupedTransferHistory =
         this.groupTransferHistoryByTokenId(transferHistory);
 
-      const tokens = await getTokens(contractAddress, results);
+      const originalTokens = await getTokens(contractAddress, results);
+      const tokens = this.removeDuplicateTokens(originalTokens);
       const tokensWithCurrentOwner = tokens.map((x) => {
         const sortedHistories = (
           groupedTransferHistory[x.tokenId] as TransferHistory[]
@@ -112,5 +113,31 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
     const grouped = groupByTokenId(transferHistories);
 
     return grouped;
+  }
+
+  private removeDuplicateTokens(
+    tokens: {
+      contractAddress: string;
+      fromAddress: any;
+      toAddress: any;
+      tokenId: string;
+      tokenType: string;
+    }[],
+  ) {
+    const cleanTokens = [];
+
+    for (const token of tokens) {
+      const isDuplicate = cleanTokens.some(
+        (x) =>
+          x.tokenId === token.tokenId &&
+          x.contractAddress === token.contractAddress,
+      );
+
+      if (!isDuplicate) {
+        cleanTokens.push(token);
+      }
+    }
+
+    return cleanTokens;
   }
 }
