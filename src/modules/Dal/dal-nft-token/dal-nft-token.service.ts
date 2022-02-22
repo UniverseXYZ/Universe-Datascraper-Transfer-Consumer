@@ -17,13 +17,16 @@ export class DalNFTTokensService {
   async upsertERC721NFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} ERC721 tokens`);
     await this.nfttokensModel.bulkWrite(
-      tokens.map((x) => ({
-        updateOne: {
-          filter: { contractAddress: x.contractAddress, tokenId: x.tokenId },
-          update: { ...x },
-          upsert: true,
-        },
-      })),
+      tokens.map((x) => {
+        const { contractAddress, tokenId, ...rest } = x;
+        return {
+          updateOne: {
+            filter: { contractAddress: contractAddress, tokenId: tokenId },
+            update: { ...rest },
+            upsert: true,
+          },
+        };
+      }),
     );
   }
 
@@ -31,16 +34,16 @@ export class DalNFTTokensService {
   async upsertCryptoPunksNFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} CryptoPunks tokens`);
     await this.nfttokensModel.bulkWrite(
-      tokens.map((x) => ({
-        updateOne: {
-          filter: {
-            contractAddress: x.contractAddress,
-            tokenId: x.tokenId,
+      tokens.map((x) => {
+        const { contractAddress, tokenId, ...rest } = x;
+        return {
+          updateOne: {
+            filter: { contractAddress: contractAddress, tokenId: tokenId },
+            update: { ...rest },
+            upsert: true,
           },
-          update: { ...x },
-          upsert: true,
-        },
-      })),
+        };
+      }),
     );
   }
 
