@@ -22,7 +22,7 @@ export class DalNFTTokensService {
         return {
           updateOne: {
             filter: { contractAddress: contractAddress, tokenId: tokenId },
-            update: { ...rest },
+            update: { $set: { ...rest } },
             upsert: true,
           },
         };
@@ -48,12 +48,12 @@ export class DalNFTTokensService {
               ],
             },
           },
-          upsert: true,
+          upsert: false,
         },
       })),
     );
   }
-  
+
   //CryptoPunks is non fungible token which only has one tokenId
   async upsertCryptoPunksNFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} CryptoPunks tokens`);
