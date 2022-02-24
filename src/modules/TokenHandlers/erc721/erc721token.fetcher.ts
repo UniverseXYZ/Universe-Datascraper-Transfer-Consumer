@@ -5,25 +5,29 @@ import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
+  LatestOwner,
   Token,
-  TokenTransferFetcher,
+  TokenWithLatestOwnerTransferFetcher,
   TransferHistory,
 } from '../tokens-handler/interfaces/tokens.interface';
 import { getTokens, getTransferHistory } from './event-mapper';
 
-export default class ERC721TokenFecther implements TokenTransferFetcher {
+export default class ERC721TokenFecther
+  implements TokenWithLatestOwnerTransferFetcher
+{
   private ether: ethers.providers.BaseProvider;
   private readonly logger = new Logger(ERC721TokenFecther.name);
 
   constructor(private readonly ethereumService: EthereumService) {
     this.ether = this.ethereumService.getEther();
   }
-  async getTokensAndTransferHistory(
+  async getTokensWithLatestOwnersAndTransferHistory(
     contractAddress: string,
     startBlock: number,
     endBlock: number,
   ): Promise<{
     tokens: Token[];
+    latestOwners: LatestOwner[];
     transferHistory: TransferHistory[];
   }> {
     this.ether = this.ethereumService.getEther();
@@ -46,35 +50,23 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
         contractAddress,
         results,
       );
-      const groupedTransferHistory =
-        this.groupTransferHistoryByTokenId(transferHistory);
 
       const originalTokens = await getTokens(contractAddress, results);
       const tokens = this.removeDuplicateTokens(originalTokens);
-      const tokensWithCurrentOwner = tokens.map((x) => {
-        const sortedHistories = (
-          groupedTransferHistory[x.tokenId] as TransferHistory[]
-        ).sort((a, b) => b.blockNum - a.blockNum);
-
-        const owner = {
-          address: sortedHistories[sortedHistories.length - 1].to, // last transfer history's toAddress
-          transactionHash: sortedHistories[sortedHistories.length - 1].hash,
-          value: 1,
-        } as Owner;
-
-        return {
-          ...x,
-          blockNumber: sortedHistories[sortedHistories.length - 1].blockNum,
-          firstOwner: x.toAddress,
-          owners: [owner],
-        } as Token;
-      });
 
       this.logger.log(
         `Got ${tokens.length} tokens and ${transferHistory.length} transfer histories.`,
       );
 
-      return { tokens: tokensWithCurrentOwner as Token[], transferHistory };
+      const latestOwners = this.getLatestOwners(
+        transferHistory.sort((a, b) => a.blockNum - b.blockNum),
+      );
+
+      return {
+        tokens,
+        latestOwners,
+        transferHistory,
+      };
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
@@ -139,5 +131,28 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
     }
 
     return cleanTokens;
+  }
+
+  private getLatestOwners(allHistories: TransferHistory[]) {
+    const groupedTransferHistories =
+      this.groupTransferHistoryByTokenId(allHistories);
+
+    const latestOwners = Object.keys(groupedTransferHistories).map(
+      (tokenId) => {
+        // sort descending
+        const historiesWithTokenId = groupedTransferHistories[tokenId].sort(
+          (a, b) => b.blockNum - a.blockNum,
+        );
+
+        return {
+          ownerAddress: historiesWithTokenId[0].to,
+          hash: historiesWithTokenId[0].hash,
+          contractAddress: historiesWithTokenId[0].contractAddress,
+          tokenId: historiesWithTokenId[0].tokenId,
+          blockNumber: historiesWithTokenId[0].blockNum,
+        } as LatestOwner;
+      },
+    );
+    return latestOwners;
   }
 }

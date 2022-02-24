@@ -22,9 +22,9 @@ export default class ERC721TokenHandler implements Handler {
   }
 
   async handle(contractAddress: string, startBlock: number, endBlock: number) {
-    // Get 1155 tranfer history and tokens
-    const { tokens, transferHistory } =
-      await this.fetcher.getTokensAndTransferHistory(
+    // Get ERC721 tranfer history and tokens
+    const { tokens, latestOwners, transferHistory } =
+      await this.fetcher.getTokensWithLatestOwnersAndTransferHistory(
         contractAddress,
         startBlock,
         endBlock,
@@ -34,6 +34,7 @@ export default class ERC721TokenHandler implements Handler {
       `Fetched transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
     );
     await this.analayser.handleUpcomingTokens(tokens);
+    await this.nftTokenService.upsertLatestOwnersForERC721Tokens(latestOwners);
     await this.nftTransferHistoryService.createERC721NFTTransferHistoryBatch(
       transferHistory,
     );

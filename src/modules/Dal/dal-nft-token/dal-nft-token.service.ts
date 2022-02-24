@@ -29,7 +29,31 @@ export class DalNFTTokensService {
       }),
     );
   }
-
+  async upsertLatestOwnersForERC721Tokens(latestOwner: LatestOwner[]) {
+    this.logger.log(`Upserting ${latestOwner.length} latest owners`);
+    await this.nfttokensModel.bulkWrite(
+      latestOwner.map((x) => ({
+        updateOne: {
+          filter: { contractAddress: x.contractAddress, tokenId: x.tokenId },
+          update: {
+            $set: {
+              tokenType: 'ERC721',
+              // ERC721 only update one owner at a time
+              owners: [
+                {
+                  address: x.ownerAddress,
+                  transactionHash: x.hash,
+                  value: 1,
+                },
+              ],
+            },
+          },
+          upsert: true,
+        },
+      })),
+    );
+  }
+  
   //CryptoPunks is non fungible token which only has one tokenId
   async upsertCryptoPunksNFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} CryptoPunks tokens`);
