@@ -18,7 +18,9 @@ export class DalNFTTokensService {
     this.logger.log(`Bulk write ${tokens.length} ERC721 tokens`);
     await this.nfttokensModel.bulkWrite(
       tokens.map((x) => {
-        const { contractAddress, tokenId, ...rest } = x;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { contractAddress, tokenId, owners, ...rest } = x;
+
         return {
           updateOne: {
             filter: { contractAddress: contractAddress, tokenId: tokenId },
@@ -29,6 +31,7 @@ export class DalNFTTokensService {
       }),
     );
   }
+
   async upsertLatestOwnersForERC721Tokens(latestOwner: LatestOwner[]) {
     this.logger.log(`Upserting ${latestOwner.length} latest owners`);
     await this.nfttokensModel.bulkWrite(
