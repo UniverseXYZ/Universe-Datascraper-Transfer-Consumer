@@ -17,18 +17,19 @@ export class DalNFTTokensService {
   async upsertERC721NFTTokens(tokens: CreateNFTTokenDto[]): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} ERC721 tokens`);
     await this.nfttokensModel.bulkWrite(
-      tokens.map((x) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { contractAddress, tokenId, owners, ...rest } = x;
-
-        return {
-          updateOne: {
-            filter: { contractAddress: contractAddress, tokenId: tokenId },
-            update: { $set: { ...rest } },
-            upsert: true,
+      tokens.map((x) => ({
+        updateOne: {
+          filter: { contractAddress: x.contractAddress, tokenId: x.tokenId },
+          update: {
+            contractAddress: x.contractAddress,
+            tokenId: x.tokenId,
+            blockNumber: x.blockNumber,
+            tokenType: x.tokenType,
+            firstOwner: x.firstOwner,
           },
-        };
-      }),
+          upsert: true,
+        },
+      })),
     );
   }
 
@@ -39,17 +40,15 @@ export class DalNFTTokensService {
         updateOne: {
           filter: { contractAddress: x.contractAddress, tokenId: x.tokenId },
           update: {
-            $set: {
-              tokenType: 'ERC721',
-              // ERC721 only update one owner at a time
-              owners: [
-                {
-                  address: x.ownerAddress,
-                  transactionHash: x.hash,
-                  value: 1,
-                },
-              ],
-            },
+            tokenType: 'ERC721',
+            // ERC721 only update one owner at a time
+            owners: [
+              {
+                address: x.ownerAddress,
+                transactionHash: x.hash,
+                value: 1,
+              },
+            ],
           },
           upsert: false,
         },
@@ -93,7 +92,7 @@ export class DalNFTTokensService {
               ],
             },
           },
-          upsert: true,
+          upsert: false,
         },
       })),
     );

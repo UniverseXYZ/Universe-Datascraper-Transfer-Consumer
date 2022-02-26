@@ -10,6 +10,6 @@ export default class ERC721TokenAnalyser implements Analyser {
 
   async handleUpcomingTokens(tokens: CreateNFTTokenDto[]) {
     this.logger.log(`Start handling upcoming ${tokens.length} ERC721 tokens`);
-    this.nftTokensService.upsertERC721NFTTokens(tokens);
+    await this.nftTokensService.upsertERC721NFTTokens(tokens);
   }
 }
