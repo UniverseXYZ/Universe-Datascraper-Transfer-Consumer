@@ -12,6 +12,6 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
     this.logger.log(
       `Start handling upcoming ${tokens.length} CryptoPunks tokens`,
     );
-    this.nftTokensService.upsertCryptoPunksNFTTokens(tokens);
+    await this.nftTokensService.upsertCryptoPunksNFTTokens(tokens);
   }
 }

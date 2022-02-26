@@ -99,7 +99,7 @@ export default class ERC721TokenFecther
 
   private groupTransferHistoryByTokenId(transferHistories: TransferHistory[]) {
     const groupByTokenId = R.groupBy((history: TransferHistory) => {
-      return history.erc721TokenId;
+      return history.tokenId;
     });
 
     const grouped = groupByTokenId(transferHistories);
@@ -150,7 +150,7 @@ export default class ERC721TokenFecther
           contractAddress: historiesWithTokenId[0].contractAddress,
           tokenId: historiesWithTokenId[0].tokenId,
           blockNumber: historiesWithTokenId[0].blockNum,
-        } as LatestOwner;
+        };
       },
     );
     return latestOwners;
