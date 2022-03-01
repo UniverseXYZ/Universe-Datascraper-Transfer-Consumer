@@ -76,10 +76,8 @@ export class DalNFTTransferHistoryService {
         return {
           updateOne: {
             filter: {
-              blockNum: x.blockNum,
               contractAddress: x.contractAddress,
               hash: hash,
-              category: 'ERC1155',
               tokenId: x.tokenId,
             },
             update: { $set: { ...rest } },
