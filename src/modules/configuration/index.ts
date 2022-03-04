@@ -6,6 +6,7 @@ export default () => ({
   app_env: process.env.APP_ENV,
   ethereum_network: process.env.ETHEREUM_NETWORK,
   session_secret: process.env.SESSION_SECRET,
+  alchemy_token: process.env.ALCHEMY_TOKEN,
   infura: {
     project_id: process.env.INFURA_PROJECT_ID,
     project_secret: process.env.INFURA_PROJECT_SECRET,
