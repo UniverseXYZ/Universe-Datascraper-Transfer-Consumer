@@ -26,7 +26,7 @@ export default class EthereumService {
       infura: {projectId, projectSecret}
     }
     
-    const ethersProvider = ethers.getDefaultProvider(network, opts);
+    const ethersProvider: ethers.providers.BaseProvider = ethers.getDefaultProvider(network, opts);
     this.ether = ethersProvider;
   }
 
