@@ -9,12 +9,12 @@ export default class EthereumService {
   private readonly logger = new Logger(EthereumService.name);
 
   constructor(private configService: ConfigService) {
-    const key = this.configService.get('ethereum_network');
+    const key: string = this.configService.get('ethereum_network');
 
-    const projectSecret = this.configService.get('infura.project_secret');
-    const projectId = this.configService.get('infura.project_id');
+    const projectSecret: string = this.configService.get('infura.project_secret');
+    const projectId: string = this.configService.get('infura.project_id');
 
-    const alchemyToken = this.configService.get('alchemy_token')
+    const alchemyToken: string = this.configService.get('alchemy_token')
     
     if (!(projectSecret && projectId) && !alchemyToken) {
       throw new Error('Infura project id and secret or alchemy token is not defined');
