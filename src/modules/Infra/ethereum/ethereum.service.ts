@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EthereumNetworkType } from './interface';
+import { EthereumNetworkType, InfuraProject, ProviderOptions } from './interface';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
 
@@ -9,7 +9,7 @@ export default class EthereumService {
   private readonly logger = new Logger(EthereumService.name);
 
   constructor(private configService: ConfigService) {
-    const key: string = this.configService.get('ethereum_network');
+    const network: ethers.providers.Networkish = this.configService.get('ethereum_network');
 
     const projectSecret: string = this.configService.get('infura.project_secret');
     const projectId: string = this.configService.get('infura.project_id');
@@ -19,22 +19,14 @@ export default class EthereumService {
     if (!(projectSecret && projectId) && !alchemyToken) {
       throw new Error('Infura project id and secret or alchemy token is not defined');
     }
-    
-    const opts = {}
-    opts['quorum'] = 1;
-
-    if(projectSecret && projectId){
-      opts['infura'] = {
-        projectId,
-        projectSecret
-      }
-    }
-
-    if (alchemyToken){
-      opts['alchemy'] = alchemyToken
+        
+    const opts: ProviderOptions = {
+      quorum: 1,
+      alchemy: alchemyToken || '',
+      infura: {projectId, projectSecret}
     }
     
-    const ethersProvider = ethers.getDefaultProvider(EthereumNetworkType[key], opts);
+    const ethersProvider = ethers.getDefaultProvider(network, opts);
     this.ether = ethersProvider;
   }
 
