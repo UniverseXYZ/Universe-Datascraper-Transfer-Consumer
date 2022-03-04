@@ -10,6 +10,7 @@ export default class EthereumService {
 
   constructor(private configService: ConfigService) {
     const network: ethers.providers.Networkish = this.configService.get('ethereum_network');
+    const quorum: number = this.configService.get('ethereum_quorum');
 
     const projectSecret: string = this.configService.get('infura.project_secret');
     const projectId: string = this.configService.get('infura.project_id');
@@ -25,7 +26,7 @@ export default class EthereumService {
     }
         
     const opts: ProviderOptions = {
-      quorum: 1,
+      quorum: quorum,
       alchemy: alchemy,
       infura: infura
     }
