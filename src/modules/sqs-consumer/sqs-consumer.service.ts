@@ -170,7 +170,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
         ...nftCollectionTask,
         status: MessageStatus.error,
         errorMessage:
-          `Error type: [${type}] - ${error.message}` ||
+          `Error type: [${type}] - ${error.stack || error.message}` ||
           `Error type: [${type}] - ${JSON.stringify(error)}`,
       });
     }

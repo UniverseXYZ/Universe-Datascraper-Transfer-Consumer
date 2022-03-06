@@ -82,8 +82,9 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
     const batchTransferTokens = this.getBatchTransferTokens(allResults[1]);
 
     return {
-      tokens: [...singleTransferTokens, ...batchTransferTokens],
-      transferHistory: [...singleTransferHistory, ...batchTransferHistory],
+      tokens: [...singleTransferTokens, ...batchTransferTokens] || [],
+      transferHistory:
+        [...singleTransferHistory, ...batchTransferHistory] || [],
     };
   }
 
