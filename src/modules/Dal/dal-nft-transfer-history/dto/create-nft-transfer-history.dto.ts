@@ -4,6 +4,7 @@ export interface CreateNFTTransferHistoryDto {
   from: string;
   to: string;
   hash: string;
+  logIndex: number;
   tokenId: string;
   value?: number;
   erc721TokenId?: string;

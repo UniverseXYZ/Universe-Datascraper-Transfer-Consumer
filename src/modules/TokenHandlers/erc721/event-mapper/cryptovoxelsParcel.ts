@@ -1,4 +1,4 @@
-import { ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
 import { decodeAddress } from 'src/utils/abiCoder';
 import { TransferHistory } from '../../tokens-handler/interfaces/tokens.interface';
 
@@ -8,15 +8,13 @@ export const CryptovoxelsParcel_CONTRACT_ADDRESS =
 export const getTokensForCryptovoxelsParcel = async (
   results: ethers.Event[],
 ) => {
-  return results
-    .filter((x) => decodeAddress(x.topics[1]) === ethers.constants.AddressZero)
-    .map((f) => ({
-      contractAddress: f.address,
-      fromAddress: decodeAddress(f.topics[1]),
-      toAddress: decodeAddress(f.topics[2]),
-      tokenId: ethers.BigNumber.from(f.data).toString(),
-      tokenType: 'ERC721',
-    }));
+  return results.map((f) => ({
+    contractAddress: f.address,
+    fromAddress: decodeAddress(f.topics[1]),
+    toAddress: decodeAddress(f.topics[2]),
+    tokenId: ethers.BigNumber.from(f.data).toString(),
+    tokenType: 'ERC721',
+  }));
 };
 
 export const getTransferHistoryForCryptovoxelsParcel = async (
@@ -25,11 +23,11 @@ export const getTransferHistoryForCryptovoxelsParcel = async (
   return results.map((x) => ({
     contractAddress: x.address,
     blockNum: x.blockNumber,
+    logIndex: x.logIndex,
     hash: x.transactionHash,
     from: decodeAddress(x.topics[1]),
     to: decodeAddress(x.topics[2]),
     tokenId: ethers.BigNumber.from(x.data).toString(),
-    value: 1,
     erc721TokenId: ethers.BigNumber.from(x.data).toString(),
     category: 'ERC721',
   }));

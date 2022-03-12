@@ -1,4 +1,3 @@
-import { Owner } from 'datascraper-schema';
 import { CreateNFTTokenDto } from 'src/modules/Dal/dal-nft-token/dto/create-nft-token.dto';
 // Infura error
 // { code: -32005, message: 'query returned more than 10000 results' }
@@ -19,12 +18,11 @@ export interface ERC1155Owner {
 }
 
 export interface Token {
-  blockNumber: number;
+  blockNumber?: number;
   firstOwner?: string;
-  owners?: Owner[];
   contractAddress: string;
-  fromAddress: any;
-  toAddress: any;
+  fromAddress?: any;
+  toAddress?: any;
   tokenId: string;
   tokenType: string;
   value?: number;
@@ -41,6 +39,7 @@ export interface TransferHistory {
   from: string;
   to: string;
   hash: string;
+  logIndex: number;
   tokenId: string;
   value?: number;
   erc721TokenId?: string;

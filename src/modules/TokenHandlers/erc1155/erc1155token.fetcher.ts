@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
+import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
@@ -43,10 +44,13 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
       );
 
       this.logger.log(
-        `Got ${result.tokens.length} tokens and ${result.transferHistory.length} transfer histories.`,
+        `Got ${result.tokens?.length} tokens and ${result.transferHistory?.length} transfer histories.`,
       );
 
-      return result;
+      return {
+        tokens: result.tokens || [],
+        transferHistory: result.transferHistory || [],
+      };
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
@@ -62,29 +66,29 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
     tokens: Token[];
     transferHistory: TransferHistory[];
   }> {
-    const singleResults = this.getSingleTransfers(
+    const singleResults = await this.getSingleTransfers(
       contractAddress,
       startBlock,
       endBlock,
     );
 
-    const batchResults = this.getBatchTransfers(
+    const batchResults = await this.getBatchTransfers(
       contractAddress,
       startBlock,
       endBlock,
     );
 
-    const allResults = await Promise.all([singleResults, batchResults]);
-
-    const singleTransferHistory = this.getSingleTransferHistory(allResults[0]);
-    const singleTransferTokens = this.getSingleTransferTokens(allResults[0]);
-    const batchTransferHistory = this.getBatchTransferHistory(allResults[1]);
-    const batchTransferTokens = this.getBatchTransferTokens(allResults[1]);
+    const singleTransferHistory = this.getSingleTransferHistory(singleResults);
+    const singleTransferTokens = this.getSingleTransferTokens(singleResults);
+    const batchTransferHistory = this.getBatchTransferHistory(batchResults);
+    const batchTransferTokens = this.getBatchTransferTokens(batchResults);
 
     return {
-      tokens: [...singleTransferTokens, ...batchTransferTokens] || [],
-      transferHistory:
-        [...singleTransferHistory, ...batchTransferHistory] || [],
+      tokens: R.uniqBy(
+        (x) => x.tokenId,
+        [...singleTransferTokens, ...batchTransferTokens],
+      ),
+      transferHistory: [...singleTransferHistory, ...batchTransferHistory],
     };
   }
 
@@ -145,28 +149,15 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
   }
 
   private getSingleTransferTokens(results: ethers.Event[]) {
-    return results
-      .map((f) => ({
-        contractAddress: f.address,
-        blockNumber: f.blockNumber,
-        transactionHash: f.transactionHash,
-        fromAddress: f.args['_from'],
-        firstOwner: f.args['_from'], //at very beginning, the first from address is the first owner
-        toAddress: f.args['_to'],
-        tokenId: ethers.BigNumber.from(f.args['_id']).toString(),
-        value: ethers.BigNumber.from(f.args['_value']).toNumber(),
-        tokenType: 'ERC1155',
-      }))
-      .map((r) => {
-        if (r.fromAddress === ethers.constants.AddressZero) {
-          return {
-            ...r,
-            firstOwner: r.toAddress,
-          };
-        }
-
-        return r;
-      });
+    return results.map((f) => ({
+      contractAddress: f.address,
+      blockNumber: f.blockNumber,
+      transactionHash: f.transactionHash,
+      fromAddress: f.args['_from'],
+      toAddress: f.args['_to'],
+      tokenId: ethers.BigNumber.from(f.args['_id']).toString(),
+      tokenType: 'ERC1155',
+    }));
   }
 
   private getSingleTransferHistory(results: ethers.Event[]): TransferHistory[] {
@@ -174,12 +165,13 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
       contractAddress: x.address,
       blockNum: x.blockNumber,
       hash: x.transactionHash,
+      logIndex: x.logIndex,
       from: x.args['_from'],
       to: x.args['_to'],
       tokenId: ethers.BigNumber.from(x.args['_id']).toString(),
       erc1155Metadata: {
         tokenId: ethers.BigNumber.from(x.args['_id']).toString(),
-        value: ethers.BigNumber.from(x.args['_value']).toNumber(),
+        value: ethers.BigNumber.from(x.args['_value']).toString(),
       },
       category: 'ERC1155',
     }));
@@ -187,28 +179,15 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
 
   private getBatchTransferTokens(results: ethers.Event[]) {
     return results.flatMap((f) =>
-      f.args['_ids']
-        .map((id, index) => ({
-          contractAddress: f.address,
-          blockNumber: f.blockNumber,
-          transactionHash: f.transactionHash,
-          fromAddress: f.args['_from'],
-          firstOwner: f.args['_from'], //at very beginning, the first from address is the first owner
-          toAddress: f.args['_to'],
-          tokenId: ethers.BigNumber.from(id).toString(),
-          value: ethers.BigNumber.from(f.args['_values'][index]).toNumber(),
-          tokenType: 'ERC1155',
-        }))
-        .map((r) => {
-          if (r.fromAddress === ethers.constants.AddressZero) {
-            return {
-              ...r,
-              firstOwner: r.toAddress,
-            };
-          }
-
-          return r;
-        }),
+      f.args['_ids'].map((id) => ({
+        contractAddress: f.address,
+        blockNum: f.blockNumber,
+        transactionHash: f.transactionHash,
+        fromAddress: f.args['_from'],
+        toAddress: f.args['_to'],
+        tokenId: ethers.BigNumber.from(id).toString(),
+        tokenType: 'ERC1155',
+      })),
     );
   }
 
@@ -218,11 +197,13 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
         contractAddress: x.address,
         blockNum: x.blockNumber,
         hash: x.transactionHash,
+        logIndex: x.logIndex,
         from: x.args['_from'],
         to: x.args['_to'],
+        tokenId: ethers.BigNumber.from(id).toString(),
         erc1155Metadata: {
           tokenId: ethers.BigNumber.from(id).toString(),
-          value: ethers.BigNumber.from(x.args['_values'][index]).toNumber(),
+          value: ethers.BigNumber.from(x.args['_values'][index]).toString(),
         },
         category: 'ERC1155',
       })),

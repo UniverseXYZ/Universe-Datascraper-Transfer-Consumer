@@ -1,33 +1,28 @@
 import { Logger } from '@nestjs/common';
-import { Owner } from 'datascraper-schema';
 import { ethers } from 'ethers';
 import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
-  LatestOwner,
   Token,
-  TokenWithLatestOwnerTransferFetcher,
+  TokenTransferFetcher,
   TransferHistory,
 } from '../tokens-handler/interfaces/tokens.interface';
 import { getTokens, getTransferHistory } from './event-mapper';
 
-export default class ERC721TokenFecther
-  implements TokenWithLatestOwnerTransferFetcher
-{
+export default class ERC721TokenFecther implements TokenTransferFetcher {
   private ether: ethers.providers.BaseProvider;
   private readonly logger = new Logger(ERC721TokenFecther.name);
 
   constructor(private readonly ethereumService: EthereumService) {
     this.ether = this.ethereumService.getEther();
   }
-  async getTokensWithLatestOwnersAndTransferHistory(
+  async getTokensAndTransferHistory(
     contractAddress: string,
     startBlock: number,
     endBlock: number,
   ): Promise<{
     tokens: Token[];
-    latestOwners: LatestOwner[];
     transferHistory: TransferHistory[];
   }> {
     this.ether = this.ethereumService.getEther();
@@ -52,19 +47,14 @@ export default class ERC721TokenFecther
       );
 
       const originalTokens = await getTokens(contractAddress, results);
-      const tokens = this.removeDuplicateTokens(originalTokens);
+      const tokens = R.uniqBy((x) => x.tokenId, originalTokens);
 
       this.logger.log(
         `Got ${tokens.length} tokens and ${transferHistory.length} transfer histories.`,
       );
 
-      const latestOwners = this.getLatestOwners(
-        transferHistory.sort((a, b) => a.blockNum - b.blockNum),
-      );
-
       return {
         tokens,
-        latestOwners,
         transferHistory,
       };
     } catch (error) {
@@ -95,64 +85,5 @@ export default class ERC721TokenFecther
       `0x${endBlock.toString(16)}`,
     );
     return results;
-  }
-
-  private groupTransferHistoryByTokenId(transferHistories: TransferHistory[]) {
-    const groupByTokenId = R.groupBy((history: TransferHistory) => {
-      return history.tokenId;
-    });
-
-    const grouped = groupByTokenId(transferHistories);
-
-    return grouped;
-  }
-
-  private removeDuplicateTokens(
-    tokens: {
-      contractAddress: string;
-      fromAddress: any;
-      toAddress: any;
-      tokenId: string;
-      tokenType: string;
-    }[],
-  ) {
-    const cleanTokens = [];
-
-    for (const token of tokens) {
-      const isDuplicate = cleanTokens.some(
-        (x) =>
-          x.tokenId === token.tokenId &&
-          x.contractAddress === token.contractAddress,
-      );
-
-      if (!isDuplicate) {
-        cleanTokens.push(token);
-      }
-    }
-
-    return cleanTokens;
-  }
-
-  private getLatestOwners(allHistories: TransferHistory[]) {
-    const groupedTransferHistories =
-      this.groupTransferHistoryByTokenId(allHistories);
-
-    const latestOwners = Object.keys(groupedTransferHistories).map(
-      (tokenId) => {
-        // sort descending
-        const historiesWithTokenId = groupedTransferHistories[tokenId].sort(
-          (a, b) => b.blockNum - a.blockNum,
-        );
-
-        return {
-          ownerAddress: historiesWithTokenId[0].to,
-          hash: historiesWithTokenId[0].hash,
-          contractAddress: historiesWithTokenId[0].contractAddress,
-          tokenId: historiesWithTokenId[0].tokenId,
-          blockNumber: historiesWithTokenId[0].blockNum,
-        };
-      },
-    );
-    return latestOwners;
   }
 }
