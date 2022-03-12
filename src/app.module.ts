@@ -11,6 +11,7 @@ import { SqsConsumerModule } from './modules/sqs-consumer/sqs-consumer.module';
 // import { SqsProducerModule } from './modules/sqs-producer/sqs-producer.module';
 import { DalNFTCollectionTaskModule } from './modules/Dal/dal-nft-collection-task/dal-nft-collection-task.module';
 import { DalNFTTokensModule } from './modules/Dal/dal-nft-token/dal-nft-token.module';
+import { DalNFTTokenOwnersTaskModule } from './modules/Dal/dal-nft-token-owners-task/dal-nft-token-owners-task.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { DalNFTTokensModule } from './modules/Dal/dal-nft-token/dal-nft-token.mo
     // SqsProducerModule,
     DalNFTCollectionTaskModule,
     DalNFTTokensModule,
+    DalNFTTokenOwnersTaskModule,
   ],
   controllers: [],
   providers: [],

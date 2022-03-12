@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { DalNFTTokenOwnersTaskService } from 'src/modules/Dal/dal-nft-token-owners-task/dal-nft-token-owners-task.service';
 import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token.service';
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
@@ -16,15 +17,19 @@ export default class CryptoPunksTokenHandler implements Handler {
     private readonly ethereumService: EthereumService,
     private readonly nftTokenService: DalNFTTokensService,
     private readonly nftTransferHistoryService: DalNFTTransferHistoryService,
+    private readonly nftTokenOwnersTaskService: DalNFTTokenOwnersTaskService,
   ) {
     this.fetcher = new CryptoPunksTokenFecther(this.ethereumService);
-    this.analayser = new CryptoPunksTokenAnalyser(this.nftTokenService);
+    this.analayser = new CryptoPunksTokenAnalyser(
+      this.nftTokenService,
+      this.nftTokenOwnersTaskService,
+    );
   }
 
   async handle(contractAddress: string, startBlock: number, endBlock: number) {
     // Get 1155 tranfer history and tokens
-    const { tokens, latestOwners, transferHistory } =
-      await this.fetcher.getTokensWithLatestOwnersAndTransferHistory(
+    const { tokens, transferHistory } =
+      await this.fetcher.getTokensAndTransferHistory(
         contractAddress,
         startBlock,
         endBlock,
@@ -33,12 +38,9 @@ export default class CryptoPunksTokenHandler implements Handler {
     this.logger.log(
       `Fetched transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
     );
-    await this.analayser.handleUpcomingTokens(tokens);
-    await this.nftTokenService.upsertLatestOwnersForCryptoPunksTokens(
-      latestOwners,
-    );
     await this.nftTransferHistoryService.createCryptoPunksNFTTransferHistoryBatch(
       transferHistory,
     );
+    await this.analayser.handleUpcomingTokens(tokens);
   }
 }

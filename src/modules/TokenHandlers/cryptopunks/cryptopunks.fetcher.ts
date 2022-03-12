@@ -4,10 +4,9 @@ import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceed } from '../tokens-handler/errors.handler';
 import {
-  TokenWithLatestOwnerTransferFetcher,
   Token,
   TransferHistory,
-  LatestOwner,
+  TokenTransferFetcher,
 } from '../tokens-handler/interfaces/tokens.interface';
 
 // CryptoPunks has 3 events for transfer.
@@ -16,9 +15,7 @@ import {
 // 3. PunkBought: This event is used to record a transfer history of NFT token.
 // tips: The Transfer event (similiarly in ERC721) does not have the punkIndex a.k.a tokenId.
 //       So that we can't use the Transfer event to fetch the neither NFT token nor token transfer history.
-export default class CryptoPunksTokenFecther
-  implements TokenWithLatestOwnerTransferFetcher
-{
+export default class CryptoPunksTokenFecther implements TokenTransferFetcher {
   private ether: ethers.providers.BaseProvider;
   private readonly logger = new Logger(CryptoPunksTokenFecther.name);
 
@@ -26,13 +23,12 @@ export default class CryptoPunksTokenFecther
     this.ether = this.ethereumService.getEther();
   }
 
-  async getTokensWithLatestOwnersAndTransferHistory(
+  async getTokensAndTransferHistory(
     contractAddress: string,
     startBlock: number,
     endBlock: number,
   ): Promise<{
     tokens: Token[];
-    latestOwners: LatestOwner[];
     transferHistory: TransferHistory[];
   }> {
     this.ether = this.ethereumService.getEther();
@@ -41,7 +37,7 @@ export default class CryptoPunksTokenFecther
         `Start to get contractAddress(${contractAddress}) in block(${startBlock}-${endBlock})'s transfer history`,
       );
 
-      const { tokens, latestOwners, transferHistory } = await this.getResult(
+      const { tokens, transferHistory } = await this.getResult(
         contractAddress,
         startBlock,
         endBlock,
@@ -51,7 +47,7 @@ export default class CryptoPunksTokenFecther
         `Got ${tokens.length} tokens and ${transferHistory.length} transfer histories for contractAddress(${contractAddress}) between block(${startBlock}-${endBlock})`,
       );
 
-      return { tokens, latestOwners, transferHistory };
+      return { tokens, transferHistory };
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
@@ -76,7 +72,11 @@ export default class CryptoPunksTokenFecther
       this.ether,
     );
 
-    const tokens = await this.getMintTokens(contract, startBlock, endBlock);
+    const mintHistory = await this.getMintTokensHistory(
+      contract,
+      startBlock,
+      endBlock,
+    );
 
     const punkTransferHistories = await this.getPunkTransferHistory(
       contract,
@@ -91,30 +91,34 @@ export default class CryptoPunksTokenFecther
     );
 
     const allHistories = [
+      ...mintHistory,
       ...punkTransferHistories,
       ...punkBoughtHistories,
     ].sort((a, b) => a.blockNum - b.blockNum);
 
-    const latestOwners = this.getLatestOwners(allHistories);
+    const tokens = this.mapTokens(allHistories);
 
     return {
       tokens,
-      latestOwners,
       transferHistory: allHistories,
     };
   }
 
-  private groupTransferHistoryByTokenId(transferHistories: TransferHistory[]) {
-    const groupByTokenId = R.groupBy((history: TransferHistory) => {
-      return history.cryptopunks.punkIndex as string;
-    });
+  private mapTokens(allHistories: TransferHistory[]) {
+    const tokens = R.uniqBy((history) => history.tokenId, allHistories).map(
+      (history) => ({
+        blockNumber: history.blockNum,
+        contractAddress: history.contractAddress,
+        tokenId: history.tokenId,
+        tokenType: history.category,
+        value: 1,
+      }),
+    );
 
-    const grouped = groupByTokenId(transferHistories);
-
-    return grouped;
+    return tokens;
   }
 
-  private async getMintTokens(
+  private async getMintTokensHistory(
     contract: ethers.Contract,
     startBlock: number,
     endBlock: number,
@@ -132,20 +136,19 @@ export default class CryptoPunksTokenFecther
     );
 
     return results.map((f) => ({
-      blockNumber: f.blockNumber,
+      blockNum: f.blockNumber,
       contractAddress: f.address,
-      fromAddress: ethers.constants.AddressZero,
+      from: ethers.constants.AddressZero,
       firstOwner: f.args['to'],
-      owners: [
-        {
-          address: f.args['to'],
-          transactionHash: f.transactionHash,
-          value: 1,
-        },
-      ],
-      toAddress: f.args['to'],
+      to: f.args['to'],
       tokenId: ethers.BigNumber.from(f.args['punkIndex']).toString(),
-      tokenType: 'CryptoPunks',
+      cryptopunks: {
+        punkIndex: ethers.BigNumber.from(f.args['punkIndex']).toString(),
+      },
+      category: 'CryptoPunks',
+      hash: f.transactionHash,
+      logIndex: f.logIndex,
+      value: 1,
     }));
   }
 
@@ -170,6 +173,7 @@ export default class CryptoPunksTokenFecther
       contractAddress: x.address,
       blockNum: x.blockNumber,
       hash: x.transactionHash,
+      logIndex: x.logIndex,
       from: x.args['from'],
       to: x.args['to'],
       tokenId: ethers.BigNumber.from(x.args['punkIndex']).toString(),
@@ -202,6 +206,7 @@ export default class CryptoPunksTokenFecther
       contractAddress: x.address,
       blockNum: x.blockNumber,
       hash: x.transactionHash,
+      logIndex: x.logIndex,
       from: x.args['fromAddress'],
       to: x.args['toAddress'],
       tokenId: ethers.BigNumber.from(x.args['punkIndex']).toString(),
@@ -211,28 +216,5 @@ export default class CryptoPunksTokenFecther
       },
       category: 'CryptoPunks',
     }));
-  }
-
-  private getLatestOwners(allHistories: TransferHistory[]) {
-    const groupedTransferHistories =
-      this.groupTransferHistoryByTokenId(allHistories);
-
-    const latestOwners = Object.keys(groupedTransferHistories).map(
-      (tokenId) => {
-        // sort descending
-        const historiesWithTokenId = groupedTransferHistories[tokenId].sort(
-          (a, b) => b.blockNum - a.blockNum,
-        );
-
-        return {
-          ownerAddress: historiesWithTokenId[0].to,
-          hash: historiesWithTokenId[0].hash,
-          contractAddress: historiesWithTokenId[0].contractAddress,
-          tokenId: historiesWithTokenId[0].cryptopunks.punkIndex,
-          blockNumber: historiesWithTokenId[0].blockNum,
-        } as LatestOwner;
-      },
-    );
-    return latestOwners;
   }
 }

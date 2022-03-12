@@ -34,11 +34,15 @@ export class DalNFTTransferHistoryService {
             tokenId: x.tokenId,
             contractAddress: x.contractAddress,
             hash: x.hash,
+            logIndex: x.logIndex,
           },
           update: { $set: x },
           upsert: true,
         },
       })),
+      {
+        ordered: false,
+      },
     );
   }
 
@@ -48,18 +52,26 @@ export class DalNFTTransferHistoryService {
     this.logger.log(
       `Bulk write ${transferHistory.length} CryptoPunks transfer histories`,
     );
+    console.log(transferHistory);
     await this.nftTransferHistoryModel.bulkWrite(
-      transferHistory.map((x) => ({
-        updateOne: {
-          filter: {
-            tokenId: x.tokenId,
-            contractAddress: x.contractAddress,
-            hash: x.hash,
+      transferHistory.map((x) => {
+        const { hash, ...rest } = x;
+        return {
+          updateOne: {
+            filter: {
+              contractAddress: x.contractAddress,
+              hash: hash,
+              tokenId: x.tokenId,
+              logIndex: x.logIndex,
+            },
+            update: { $set: { ...rest } },
+            upsert: true,
           },
-          update: { $set: x },
-          upsert: true,
-        },
-      })),
+        };
+      }),
+      {
+        ordered: false,
+      },
     );
   }
 
@@ -79,12 +91,16 @@ export class DalNFTTransferHistoryService {
               contractAddress: x.contractAddress,
               hash: hash,
               tokenId: x.tokenId,
+              logIndex: x.logIndex,
             },
             update: { $set: { ...rest } },
             upsert: true,
           },
         };
       }),
+      {
+        ordered: false,
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { DalNFTTokenOwnersTaskService } from 'src/modules/Dal/dal-nft-token-owners-task/dal-nft-token-owners-task.service';
 import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token.service';
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
@@ -16,9 +17,13 @@ export default class ERC1155TokenHandler implements Handler {
     private readonly ethereumService: EthereumService,
     private readonly nftTokenService: DalNFTTokensService,
     private readonly nftTransferHistoryService: DalNFTTransferHistoryService,
+    private readonly nftTokenOwnersTaskService: DalNFTTokenOwnersTaskService,
   ) {
     this.fetcher = new ERC1155TokenFecther(this.ethereumService);
-    this.analayser = new ERC1155TokenAnalyser(this.nftTokenService);
+    this.analayser = new ERC1155TokenAnalyser(
+      this.nftTokenService,
+      this.nftTokenOwnersTaskService,
+    );
   }
 
   async handle(contractAddress: string, startBlock: number, endBlock: number) {

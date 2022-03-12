@@ -2,13 +2,12 @@ export default () => ({
   mongodb: {
     uri: process.env.MONGODB_URI,
   },
-  port: process.env.APP_PORT,
+  port: process.env.PORT,
   app_env: process.env.APP_ENV,
   ethereum_network: process.env.ETHEREUM_NETWORK,
   ethereum_quorum: process.env.ETHEREUM_QUORUM,
   session_secret: process.env.SESSION_SECRET,
   alchemy_token: process.env.ALCHEMY_TOKEN,
-  chainstack_url: process.env.CHAINSTACK_URL,
   infura: {
     project_id: process.env.INFURA_PROJECT_ID,
     project_secret: process.env.INFURA_PROJECT_SECRET,
