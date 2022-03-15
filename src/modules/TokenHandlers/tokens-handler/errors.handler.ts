@@ -1,9 +1,16 @@
 import {
   TransferHistoryError,
   SizeExceedError,
+  BulkWriteError,
 } from './interfaces/tokens.interface';
 
-export function handleSizeExceed(error: any) {
+export function handleDBError(error: Error) {
+  if (error.stack && error.stack.includes('MongoBulkWriteError')) {
+    throw new BulkWriteError(error.message, error.stack);
+  }
+}
+
+export function handleSizeExceedError(error: any) {
   if (error.body) {
     //infura and alchemy does this way
     const errorBody = JSON.parse(error.body);

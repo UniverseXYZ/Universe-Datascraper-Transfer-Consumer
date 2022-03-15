@@ -18,7 +18,10 @@ import { DalNFTCollectionTaskService } from '../Dal/dal-nft-collection-task/dal-
 import { MessageStatus } from '../Dal/dal-nft-collection-task/schemas/nft-collection-task.schema';
 import https from 'https';
 import TokensHandler from '../TokenHandlers/tokens-handler/tokens.handler';
-import { SizeExceedError } from '../TokenHandlers/tokens-handler/interfaces/tokens.interface';
+import {
+  BulkWriteError,
+  SizeExceedError,
+} from '../TokenHandlers/tokens-handler/interfaces/tokens.interface';
 
 @Injectable()
 export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -158,23 +161,37 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       endBlock: receivedMessage.endBlock,
     };
 
+    if (error instanceof BulkWriteError) {
+      //error status
+      await this.updateTaskWithError(error, nftCollectionTask, type);
+      return;
+    }
+
     if (error instanceof SizeExceedError) {
       //split status
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
       });
-    } else {
-      //error status
-      await this.nftCollectionTaskService.updateNFTCollectionTask({
-        ...nftCollectionTask,
-        status: MessageStatus.error,
-        errorMessage:
-          `Error type: [${type}] - ${error.stack || error.message}` ||
-          `Error type: [${type}] - ${JSON.stringify(error)}`,
-      });
     }
+
+    //error status
+    await this.updateTaskWithError(error, nftCollectionTask, type);
     await this.deleteMessage(message);
+  }
+
+  private async updateTaskWithError(
+    error: Error,
+    nftCollectionTask: any,
+    type: string,
+  ) {
+    await this.nftCollectionTaskService.updateNFTCollectionTask({
+      ...nftCollectionTask,
+      status: MessageStatus.error,
+      errorMessage:
+        `Error type: [${type}] - ${error.stack || error.message}` ||
+        `Error type: [${type}] - ${JSON.stringify(error)}`,
+    });
   }
 
   private async deleteMessage(message: AWS.SQS.Message) {

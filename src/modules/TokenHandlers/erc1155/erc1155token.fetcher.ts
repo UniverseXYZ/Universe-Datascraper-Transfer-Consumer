@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
 import R from 'ramda';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
-import { handleSizeExceed } from '../tokens-handler/errors.handler';
+import { handleSizeExceedError } from '../tokens-handler/errors.handler';
 import {
   TokenTransferFetcher,
   Token,
@@ -54,7 +54,7 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
     } catch (error) {
       console.log(error);
       this.logger.log(`Error when getting transfer history - ${error}`);
-      handleSizeExceed(error);
+      handleSizeExceedError(error);
     }
   }
 
