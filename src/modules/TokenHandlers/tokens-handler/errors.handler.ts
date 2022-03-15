@@ -5,8 +5,10 @@ import {
 } from './interfaces/tokens.interface';
 
 export function handleDBError(error: Error) {
-  if (error.stack && error.stack.includes('MongoBulkWriteError')) {
+  if (error.stack && error.stack.includes('E11000 duplicate key error')) {
     throw new BulkWriteError(error.message, error.stack);
+  } else {
+    throw error;
   }
 }
 
