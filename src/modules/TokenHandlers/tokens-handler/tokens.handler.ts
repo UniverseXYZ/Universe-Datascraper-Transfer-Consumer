@@ -20,6 +20,7 @@ export default class TokensHandler {
     endBlock: number,
     tokenType: string,
   ) {
+    const currentTimestamp = new Date().getTime() / 1000;
     try {
       switch (tokenType) {
         case 'ERC721':
@@ -48,6 +49,13 @@ export default class TokensHandler {
       }
     } catch (error) {
       handleDBError(error);
+    } finally {
+      const endTimestamp = new Date().getTime() / 1000;
+      this.logger.log(
+        `[${contractAddress}-${startBlock}-${endBlock}] total processing time spent: ${
+          endTimestamp - currentTimestamp
+        } seconds`,
+      );
     }
   }
 }

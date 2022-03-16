@@ -41,7 +41,7 @@ export default class ERC721TokenAnalyser implements Analyser {
       owners,
     );
 
-    await this.nftTokenOwnerService.createERC721NFTTokenOwners(
+    await this.nftTokenOwnerService.upsertERC721NFTTokenOwners(
       toBeInsertedOwners,
     );
 
