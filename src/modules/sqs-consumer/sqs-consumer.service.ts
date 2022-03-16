@@ -173,10 +173,11 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
         ...nftCollectionTask,
         status: MessageStatus.split,
       });
+    } else {
+      //error status
+      await this.updateTaskWithError(error, nftCollectionTask, type);
     }
 
-    //error status
-    await this.updateTaskWithError(error, nftCollectionTask, type);
     await this.deleteMessage(message);
   }
 
