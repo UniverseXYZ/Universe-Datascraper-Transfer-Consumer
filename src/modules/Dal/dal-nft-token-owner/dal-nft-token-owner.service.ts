@@ -49,7 +49,6 @@ export class DalNFTTokenOwnerService {
           upsert: true,
         },
       })),
-      { ordered: false },
     );
   }
 
