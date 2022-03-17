@@ -161,14 +161,10 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       endBlock: receivedMessage.endBlock,
     };
 
-    if (error instanceof BulkWriteError) {
-      //error status
-      await this.updateTaskWithError(error, nftCollectionTask, type);
-      return;
-    }
-
-    if (error instanceof SizeExceedError) {
+    if (error instanceof SizeExceedError || error instanceof BulkWriteError) {
       //split status
+      // case 1: if size exceed, split the task
+      // case 2: if duplicated, split is better than return message back to queue as it has to be wait until visibility timeout
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
