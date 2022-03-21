@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/UniverseXYZ/Universe-Datascraper-Transfer-Consumer/compare/v1.0.0...v1.0.1) (2022-03-21)
+
+
+### Bug Fixes
+
+* add filter by blockNum when upsert owner ([#20](https://github.com/UniverseXYZ/Universe-Datascraper-Transfer-Consumer/issues/20)) ([234cc92](https://github.com/UniverseXYZ/Universe-Datascraper-Transfer-Consumer/commit/234cc92183800639fa711e735055f91a108a1716))
+
 # 1.0.0 (2022-03-15)
 
 
