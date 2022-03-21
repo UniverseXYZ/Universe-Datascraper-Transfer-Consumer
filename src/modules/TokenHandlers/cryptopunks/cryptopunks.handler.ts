@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DalNFTTokenOwnersTaskService } from 'src/modules/Dal/dal-nft-token-owners-task/dal-nft-token-owners-task.service';
+import { DalNFTTokenOwnerService } from 'src/modules/Dal/dal-nft-token-owner/dal-nft-token-owner.service';
 import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token.service';
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
 import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
@@ -17,12 +17,12 @@ export default class CryptoPunksTokenHandler implements Handler {
     private readonly ethereumService: EthereumService,
     private readonly nftTokenService: DalNFTTokensService,
     private readonly nftTransferHistoryService: DalNFTTransferHistoryService,
-    private readonly nftTokenOwnersTaskService: DalNFTTokenOwnersTaskService,
+    private readonly nftTokenOwnerService: DalNFTTokenOwnerService,
   ) {
     this.fetcher = new CryptoPunksTokenFecther(this.ethereumService);
     this.analayser = new CryptoPunksTokenAnalyser(
       this.nftTokenService,
-      this.nftTokenOwnersTaskService,
+      this.nftTokenOwnerService,
     );
   }
 
@@ -36,11 +36,12 @@ export default class CryptoPunksTokenHandler implements Handler {
       );
 
     this.logger.log(
-      `Fetched transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
+      `Fetched CryptoPunks transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
     );
     await this.nftTransferHistoryService.createCryptoPunksNFTTransferHistoryBatch(
       transferHistory,
     );
+    await this.analayser.handleOwners(transferHistory);
     await this.analayser.handleUpcomingTokens(tokens);
   }
 }
