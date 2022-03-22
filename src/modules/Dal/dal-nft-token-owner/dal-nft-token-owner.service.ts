@@ -24,7 +24,7 @@ export class DalNFTTokenOwnerService {
           filter: {
             contractAddress: x.contractAddress,
             tokenId: x.tokenId,
-            blockNum: { $lt: x.blockNum },
+            blockNum: { $lte: x.blockNum },
             logIndex: { $lt: x.logIndex },
           },
           update: {
@@ -46,7 +46,7 @@ export class DalNFTTokenOwnerService {
           filter: {
             contractAddress: x.contractAddress,
             tokenId: x.tokenId,
-            blockNum: { $lt: x.blockNum },
+            blockNum: { $lte: x.blockNum },
             logIndex: { $lt: x.logIndex },
           },
           update: {
