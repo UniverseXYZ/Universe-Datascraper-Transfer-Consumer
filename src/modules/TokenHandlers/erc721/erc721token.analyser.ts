@@ -6,8 +6,10 @@ import {
   Analyser,
   TransferHistory,
 } from '../tokens-handler/interfaces/tokens.interface';
-import { NFTTokenOwner } from 'datascraper-schema';
-import R from 'ramda';
+import {
+  calculateOwners,
+  getLatestHistory,
+} from '../tokens-handler/owners.operators';
 
 export default class ERC721TokenAnalyser implements Analyser {
   private readonly logger = new Logger(ERC721TokenAnalyser.name);
@@ -27,7 +29,7 @@ export default class ERC721TokenAnalyser implements Analyser {
 
     this.logger.log('Start handling token owners');
 
-    const latestHistory = this.getLatestHistory(transferHistories);
+    const latestHistory = getLatestHistory(transferHistories);
 
     const owners = await this.nftTokenOwnerService.getERC721NFTTokenOwners(
       latestHistory.map((x) => ({
@@ -36,7 +38,7 @@ export default class ERC721TokenAnalyser implements Analyser {
       })),
     );
 
-    const { toBeInsertedOwners, toBeUpdatedOwners } = this.calculateOwners(
+    const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
       latestHistory,
       owners,
     );
@@ -48,72 +50,5 @@ export default class ERC721TokenAnalyser implements Analyser {
     await this.nftTokenOwnerService.updateERC721NFTTokenOwners(
       toBeUpdatedOwners,
     );
-  }
-
-  private calculateOwners(
-    latestHistory: TransferHistory[],
-    owners: NFTTokenOwner[],
-  ) {
-    const toBeInsertedOwners = [];
-    const toBeUpdatedOwners = [];
-
-    for (const history of latestHistory) {
-      const { tokenId, contractAddress, to, blockNum, logIndex, category } =
-        history;
-
-      const owner = owners.find(
-        (x) => x.tokenId === tokenId && x.contractAddress === contractAddress,
-      );
-
-      const newOwner = {
-        tokenId,
-        contractAddress,
-        address: to,
-        blockNum,
-        logIndex,
-        tokenType: category,
-        transactionHash: history.hash,
-        value: '1',
-      };
-
-      if (!owner) {
-        toBeInsertedOwners.push(newOwner);
-        continue;
-      }
-      if (owner.blockNum > blockNum) continue;
-
-      if (owner.blockNum === blockNum && owner.logIndex > logIndex) continue;
-
-      toBeUpdatedOwners.push(newOwner);
-    }
-
-    return { toBeInsertedOwners, toBeUpdatedOwners };
-  }
-
-  private getLatestHistory(transferHistories: TransferHistory[]) {
-    const groupedTransferHistories =
-      this.groupTransferHistoryByTokenId(transferHistories);
-
-    const latestTransferHistory = Object.keys(groupedTransferHistories).map(
-      (tokenId) => {
-        // sort descending
-        const historiesWithTokenId = groupedTransferHistories[tokenId].sort(
-          (a, b) => b.blockNum - a.blockNum,
-        );
-
-        return historiesWithTokenId[0];
-      },
-    );
-    return latestTransferHistory;
-  }
-
-  private groupTransferHistoryByTokenId(transferHistories: TransferHistory[]) {
-    const groupByTokenId = R.groupBy((history: TransferHistory) => {
-      return history.tokenId;
-    });
-
-    const grouped = groupByTokenId(transferHistories);
-
-    return grouped;
   }
 }
