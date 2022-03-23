@@ -80,7 +80,16 @@ export const getLatestHistory = (transferHistories: TransferHistory[]) => {
         (a, b) => b.blockNum - a.blockNum,
       );
 
-      return historiesWithTokenId[0];
+      const maxBlockNum = historiesWithTokenId[0].blockNum;
+
+      const historiesInMaxBlockNum = historiesWithTokenId.filter(
+        (historiesWithTokenId) => historiesWithTokenId.blockNum === maxBlockNum,
+      );
+
+      const historiesWithMaxLogIndex = historiesInMaxBlockNum.sort(
+        (a, b) => a.logIndex - b.logIndex,
+      );
+      return historiesWithMaxLogIndex[0];
     },
   );
   return latestTransferHistory;
