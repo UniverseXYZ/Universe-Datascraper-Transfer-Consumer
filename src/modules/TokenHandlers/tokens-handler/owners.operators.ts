@@ -87,7 +87,7 @@ export const getLatestHistory = (transferHistories: TransferHistory[]) => {
       );
 
       const historiesWithMaxLogIndex = historiesInMaxBlockNum.sort(
-        (a, b) => a.logIndex - b.logIndex,
+        (a, b) => b.logIndex - a.logIndex,
       );
       return historiesWithMaxLogIndex[0];
     },
