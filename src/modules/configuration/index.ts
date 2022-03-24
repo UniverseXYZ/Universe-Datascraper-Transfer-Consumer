@@ -9,6 +9,7 @@ export default () => ({
   session_secret: process.env.SESSION_SECRET,
   alchemy_token: process.env.ALCHEMY_TOKEN,
   chainstack_url: process.env.CHAINSTACK_URL,
+  quicknode_url: process.env.QUICKNODE_URL,
   infura: {
     project_id: process.env.INFURA_PROJECT_ID,
     project_secret: process.env.INFURA_PROJECT_SECRET,
