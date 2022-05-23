@@ -105,14 +105,16 @@ export default class CryptoPunksTokenFecther implements TokenTransferFetcher {
   }
 
   private mapTokens(allHistories: TransferHistory[]) {
-    const tokens = R.uniqBy((history) => history.tokenId, allHistories).map(
-      (history) => ({
-        blockNumber: history.blockNum,
-        contractAddress: history.contractAddress,
-        tokenId: history.tokenId,
-        tokenType: history.category,
-        value: 1,
-      }),
+    const tokens = [...new Map(allHistories.map(history =>
+      [history['tokenId'], history])).values()]
+      .map(
+        (history) => ({
+          blockNumber: history.blockNum,
+          contractAddress: history.contractAddress,
+          tokenId: history.tokenId,
+          tokenType: history.category,
+          value: 1,
+        }),
     );
 
     return tokens;

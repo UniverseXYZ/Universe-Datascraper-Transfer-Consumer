@@ -47,8 +47,7 @@ export default class ERC721TokenFecther implements TokenTransferFetcher {
       );
 
       const originalTokens = await getTokens(contractAddress, results);
-      const tokens = R.uniqBy((x) => x.tokenId, originalTokens);
-
+      const tokens = [...new Map(originalTokens.map(history => [history['tokenId'], history])).values()]      
       this.logger.log(
         `Got ${tokens.length} tokens and ${transferHistory.length} transfer histories.`,
       );

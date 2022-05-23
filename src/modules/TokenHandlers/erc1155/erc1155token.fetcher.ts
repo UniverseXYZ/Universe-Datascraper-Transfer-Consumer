@@ -83,11 +83,9 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
     const batchTransferHistory = this.getBatchTransferHistory(batchResults);
     const batchTransferTokens = this.getBatchTransferTokens(batchResults);
 
+    const tokens = [...new Map([...singleTransferTokens, ...batchTransferTokens].map(history => [history['tokenId'], history])).values()]    
     return {
-      tokens: R.uniqBy(
-        (x) => x.tokenId,
-        [...singleTransferTokens, ...batchTransferTokens],
-      ),
+      tokens,
       transferHistory: [...singleTransferHistory, ...batchTransferHistory],
     };
   }
