@@ -19,6 +19,7 @@ export default class TokensHandler {
     startBlock: number,
     endBlock: number,
     tokenType: string,
+    batchSize: number
   ) {
     const currentTimestamp = new Date().getTime() / 1000;
     try {
@@ -28,6 +29,7 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
+            batchSize
           );
           break;
         case 'ERC1155':
@@ -35,6 +37,7 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
+            batchSize
           );
           break;
         case 'CryptoPunks':
@@ -42,6 +45,7 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
+            batchSize
           );
           break;
         default:

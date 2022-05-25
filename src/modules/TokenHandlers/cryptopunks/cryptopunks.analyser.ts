@@ -19,14 +19,14 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
     private readonly nftTokenOwnerService: DalNFTTokenOwnerService,
   ) {}
 
-  async handleUpcomingTokens(tokens: CreateNFTTokenDto[]) {
+  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number) {
     this.logger.log(
       `Start handling upcoming ${tokens.length} CryptoPunks tokens`,
     );
-    await this.nftTokensService.upsertNFTTokens(tokens);
+    await this.nftTokensService.upsertNFTTokens(tokens, batchSize);
   }
 
-  async handleOwners(transferHistories: TransferHistory[]) {
+  async handleOwners(transferHistories: TransferHistory[], batchSize: number) {
     if (transferHistories.length === 0) return;
 
     this.logger.log('Start handling token owners');
@@ -47,10 +47,12 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
 
     await this.nftTokenOwnerService.upsertERC721NFTTokenOwners(
       toBeInsertedOwners,
+      batchSize,
     );
 
     await this.nftTokenOwnerService.updateERC721NFTTokenOwners(
       toBeUpdatedOwners,
+      batchSize,
     );
   }
 }

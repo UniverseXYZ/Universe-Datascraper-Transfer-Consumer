@@ -26,7 +26,7 @@ export default class CryptoPunksTokenHandler implements Handler {
     );
   }
 
-  async handle(contractAddress: string, startBlock: number, endBlock: number) {
+  async handle(contractAddress: string, startBlock: number, endBlock: number, batchSize: number) {
     // Get 1155 tranfer history and tokens
     const { tokens, transferHistory } =
       await this.fetcher.getTokensAndTransferHistory(
@@ -41,7 +41,7 @@ export default class CryptoPunksTokenHandler implements Handler {
     await this.nftTransferHistoryService.createCryptoPunksNFTTransferHistoryBatch(
       transferHistory,
     );
-    await this.analayser.handleOwners(transferHistory);
-    await this.analayser.handleUpcomingTokens(tokens);
+    await this.analayser.handleOwners(transferHistory, batchSize);
+    await this.analayser.handleUpcomingTokens(tokens, batchSize);
   }
 }

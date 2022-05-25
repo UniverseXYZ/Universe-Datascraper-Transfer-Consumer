@@ -12,10 +12,10 @@ export default class ERC1155TokenAnalyser implements Analyser {
     private readonly nftTokenOwnersTaskService: DalNFTTokenOwnersTaskService,
   ) {}
 
-  async handleUpcomingTokens(tokens: CreateNFTTokenDto[]) {
+  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number) {
     this.logger.log(`Handle upcoming ${tokens.length} ERC1155 tokens`);
-    this.logger.log(`Upsert ${tokens.length} ERC1155 tokens`);
-    await this.nftTokensService.upsertNFTTokens(tokens);
+    this.logger.log(`Upsert ${tokens.length} ERC1155 tokens | Batch size: ${batchSize}`);
+    await this.nftTokensService.upsertNFTTokens(tokens, batchSize);
 
     await this.nftTokenOwnersTaskService.createNFTTokenOwnersTask(
       tokens.map((t) => ({

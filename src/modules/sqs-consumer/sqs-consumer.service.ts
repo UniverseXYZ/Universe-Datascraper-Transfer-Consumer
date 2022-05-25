@@ -28,6 +28,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SqsConsumerService.name);
   public sqsConsumer: Consumer;
   public queue: AWS.SQS;
+  public batchSize: number;
 
   constructor(
     private readonly configService: ConfigService,
@@ -37,12 +38,14 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     const region = this.configService.get('aws.region');
     const accessKeyId = this.configService.get('aws.accessKeyId');
     const secretAccessKey = this.configService.get('aws.secretAccessKey');
+    const batchSize = this.configService.get('mongodb.batchSize');
 
-    if (!region || !accessKeyId || !secretAccessKey) {
+    if (!region || !accessKeyId || !secretAccessKey || !batchSize) {
       throw new Error(
         'Initialize AWS queue failed, please check required variables',
       );
     }
+    this.batchSize = batchSize;
 
     AWS.config.update({
       region,
@@ -122,6 +125,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       startBlock,
       endBlock,
       tokenType,
+      this.batchSize
     );
   }
 
