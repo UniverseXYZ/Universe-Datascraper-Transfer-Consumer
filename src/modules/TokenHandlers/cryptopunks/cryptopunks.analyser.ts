@@ -32,6 +32,8 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
     this.logger.log('Start handling token owners');
 
     const latestHistory = getLatestHistory(transferHistories);
+    
+    this.logger.log('Fetching token owners');
 
     const owners = await this.nftTokenOwnerService.getERC721NFTTokenOwners(
       latestHistory.map((x) => ({
@@ -39,6 +41,8 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
         tokenId: x.tokenId,
       })),
     );
+
+    this.logger.log('Calculating token owners');
 
     const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
       latestHistory,

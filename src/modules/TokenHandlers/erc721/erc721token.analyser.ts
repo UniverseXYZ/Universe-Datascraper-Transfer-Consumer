@@ -30,6 +30,8 @@ export default class ERC721TokenAnalyser implements Analyser {
     this.logger.log('Start handling token owners');
 
     const latestHistory = getLatestHistory(transferHistories);
+    
+    this.logger.log('Fetching token owners');
 
     const owners = await this.nftTokenOwnerService.getERC721NFTTokenOwners(
       latestHistory.map((x) => ({
@@ -38,6 +40,7 @@ export default class ERC721TokenAnalyser implements Analyser {
       })),
     );
 
+    this.logger.log('Calcualting token owners');
     const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
       latestHistory,
       owners,
