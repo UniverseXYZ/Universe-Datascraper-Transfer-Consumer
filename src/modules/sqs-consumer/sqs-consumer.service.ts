@@ -29,6 +29,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
   public sqsConsumer: Consumer;
   public queue: AWS.SQS;
   public batchSize: number;
+  public blocksInterval: number;
 
   constructor(
     private readonly configService: ConfigService,
@@ -39,13 +40,16 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     const accessKeyId = this.configService.get('aws.accessKeyId');
     const secretAccessKey = this.configService.get('aws.secretAccessKey');
     const batchSize = this.configService.get('mongodb.batchSize');
+    const blocksInterval = this.configService.get('queue.blocksInterval');
 
-    if (!region || !accessKeyId || !secretAccessKey || !batchSize) {
+
+    if (!region || !accessKeyId || !secretAccessKey || !batchSize || !blocksInterval) {
       throw new Error(
         'Initialize AWS queue failed, please check required variables',
       );
     }
     this.batchSize = batchSize;
+    this.blocksInterval = blocksInterval;
 
     AWS.config.update({
       region,
@@ -107,6 +111,19 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     };
 
     this.logger.log(`Set message id:(${message.MessageId}) as processing`);
+
+    const blockInterval = nftCollectionTask.endBlock - nftCollectionTask.startBlock;
+
+    if (blockInterval > this.blocksInterval) {
+      this.logger.log(`Block interval is bigger(${blockInterval}) than max allowed(${this.blocksInterval}). Splitting the task into batches...`);
+
+      await this.nftCollectionTaskService.updateNFTCollectionTask({
+        ...nftCollectionTask,
+        status: MessageStatus.split,
+      });
+
+      return;
+    }
 
     await this.nftCollectionTaskService.updateNFTCollectionTask({
       ...nftCollectionTask,
