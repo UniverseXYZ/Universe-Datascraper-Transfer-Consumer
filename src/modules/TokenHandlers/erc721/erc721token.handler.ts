@@ -40,6 +40,7 @@ export default class ERC721TokenHandler implements Handler {
     );
     await this.nftTransferHistoryService.createERC721NFTTransferHistoryBatch(
       transferHistory,
+      batchSize
     );
     await this.analayser.handleOwners(transferHistory, batchSize);
     await this.analayser.handleUpcomingTokens(tokens, batchSize);

@@ -48,7 +48,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
         'Initialize AWS queue failed, please check required variables',
       );
     }
-    this.batchSize = batchSize;
+    this.batchSize = Number(batchSize);
     this.blocksInterval = blocksInterval;
 
     AWS.config.update({

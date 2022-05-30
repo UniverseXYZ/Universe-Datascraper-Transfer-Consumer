@@ -41,6 +41,7 @@ export default class ERC1155TokenHandler implements Handler {
     await this.analayser.handleUpcomingTokens(tokens, batchSize);
     await this.nftTransferHistoryService.createERC1155NFTTransferHistoryBatch(
       transferHistory,
+      batchSize
     );
   }
 }

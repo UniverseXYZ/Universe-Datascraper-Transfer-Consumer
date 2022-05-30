@@ -23,84 +23,107 @@ export class DalNFTTransferHistoryService {
 
   async createERC721NFTTransferHistoryBatch(
     transferHistory: CreateNFTTransferHistoryDto[],
+    batchSize: number
   ): Promise<void> {
     this.logger.log(
-      `Bulk write ${transferHistory.length} ERC721 transfer histories`,
+      `Bulk write ${transferHistory.length} ERC721 transfer histories | Batch size: ${batchSize}`,
     );
-    await this.nftTransferHistoryModel.bulkWrite(
-      transferHistory.map((x) => ({
-        updateOne: {
-          filter: {
-            tokenId: x.tokenId,
-            contractAddress: x.contractAddress,
-            hash: x.hash,
-            logIndex: x.logIndex,
+
+    for (let i = 0; i < transferHistory.length; i+= batchSize) {
+      const transfersBatch = transferHistory.slice(i, i + batchSize);
+
+      await this.nftTransferHistoryModel.bulkWrite(
+        transfersBatch.map((x) => ({
+          updateOne: {
+            filter: {
+              tokenId: x.tokenId,
+              contractAddress: x.contractAddress,
+              hash: x.hash,
+              logIndex: x.logIndex,
+            },
+            update: { $set: x },
+            upsert: true,
           },
-          update: { $set: x },
-          upsert: true,
+        })),
+        {
+          ordered: false,
         },
-      })),
-      {
-        ordered: false,
-      },
-    );
+      );
+
+      this.logger.log(`Batch ${i / batchSize + 1} completed`);
+    }
   }
 
   async createCryptoPunksNFTTransferHistoryBatch(
     transferHistory: CreateNFTTransferHistoryDto[],
+    batchSize: number
   ): Promise<void> {
     this.logger.log(
-      `Bulk write ${transferHistory.length} CryptoPunks transfer histories`,
+      `Bulk write ${transferHistory.length} CryptoPunks transfer histories | Batch size: ${batchSize}`,
     );
     console.log(transferHistory);
-    await this.nftTransferHistoryModel.bulkWrite(
-      transferHistory.map((x) => {
-        const { hash, ...rest } = x;
-        return {
-          updateOne: {
-            filter: {
-              contractAddress: x.contractAddress,
-              hash: hash,
-              tokenId: x.tokenId,
-              logIndex: x.logIndex,
+    for (let i = 0; i < transferHistory.length; i+= batchSize) {
+      const transfersBatch = transferHistory.slice(i, i + batchSize);
+
+      await this.nftTransferHistoryModel.bulkWrite(
+        transfersBatch.map((x) => {
+          const { hash, ...rest } = x;
+          return {
+            updateOne: {
+              filter: {
+                contractAddress: x.contractAddress,
+                hash: hash,
+                tokenId: x.tokenId,
+                logIndex: x.logIndex,
+              },
+              update: { $set: { ...rest } },
+              upsert: true,
             },
-            update: { $set: { ...rest } },
-            upsert: true,
-          },
-        };
-      }),
-      {
-        ordered: false,
-      },
-    );
+          };
+        }),
+        {
+          ordered: false,
+        },
+      );
+  
+      this.logger.log(`Batch ${i / batchSize + 1} completed`);
+    }
+
   }
 
   async createERC1155NFTTransferHistoryBatch(
     transferHistory: CreateNFTTransferHistoryDto[],
+    batchSize: number
   ): Promise<void> {
     this.logger.log(
-      `Bulk write ${transferHistory.length} ERC1155 transfer histories`,
+      `Bulk write ${transferHistory.length} ERC1155 transfer histories | Batch size: ${batchSize}`,
     );
 
-    await this.nftTransferHistoryModel.bulkWrite(
-      transferHistory.map((x) => {
-        const { hash, ...rest } = x;
-        return {
-          updateOne: {
-            filter: {
-              contractAddress: x.contractAddress,
-              hash: hash,
-              tokenId: x.tokenId,
-              logIndex: x.logIndex,
+    for (let i = 0; i < transferHistory.length; i+= batchSize) {
+      const transfersBatch = transferHistory.slice(i, i + batchSize);
+
+      await this.nftTransferHistoryModel.bulkWrite(
+        transfersBatch.map((x) => {
+          const { hash, ...rest } = x;
+          return {
+            updateOne: {
+              filter: {
+                contractAddress: x.contractAddress,
+                hash: hash,
+                tokenId: x.tokenId,
+                logIndex: x.logIndex,
+              },
+              update: { $set: { ...rest } },
+              upsert: true,
             },
-            update: { $set: { ...rest } },
-            upsert: true,
-          },
-        };
-      }),
-      {
-        ordered: false,
-      },
-    );
+          };
+        }),
+        {
+          ordered: false,
+        },
+      );
+    
+      this.logger.log(`Batch ${i / batchSize + 1} completed`);
+    }
   }
 }

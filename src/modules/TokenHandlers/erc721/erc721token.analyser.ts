@@ -41,6 +41,7 @@ export default class ERC721TokenAnalyser implements Analyser {
     );
 
     this.logger.log('Calcualting token owners');
+    //TODO: ADD BATCHING
     const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
       latestHistory,
       owners,

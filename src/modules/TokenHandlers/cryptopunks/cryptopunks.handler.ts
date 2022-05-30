@@ -40,6 +40,7 @@ export default class CryptoPunksTokenHandler implements Handler {
     );
     await this.nftTransferHistoryService.createCryptoPunksNFTTransferHistoryBatch(
       transferHistory,
+      batchSize
     );
     await this.analayser.handleOwners(transferHistory, batchSize);
     await this.analayser.handleUpcomingTokens(tokens, batchSize);
