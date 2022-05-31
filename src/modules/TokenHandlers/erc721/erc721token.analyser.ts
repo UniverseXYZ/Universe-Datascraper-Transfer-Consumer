@@ -40,21 +40,27 @@ export default class ERC721TokenAnalyser implements Analyser {
       })),
     );
 
-    this.logger.log('Calcualting token owners');
-    //TODO: ADD BATCHING
-    const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
-      latestHistory,
-      owners,
-    );
+    this.logger.log('Calculating token owners');
 
-    await this.nftTokenOwnerService.upsertERC721NFTTokenOwners(
-      toBeInsertedOwners,
-      batchSize,
-    );
-
-    await this.nftTokenOwnerService.updateERC721NFTTokenOwners(
-      toBeUpdatedOwners,
-      batchSize,
-    );
+    for (let i = 0; i < latestHistory.length; i+= batchSize) {
+      const historyBatch = latestHistory.slice(i, i + batchSize);
+      
+      const { toBeInsertedOwners, toBeUpdatedOwners } = calculateOwners(
+        historyBatch,
+        owners,
+      );
+  
+      await this.nftTokenOwnerService.upsertERC721NFTTokenOwners(
+        toBeInsertedOwners,
+        batchSize,
+      );
+  
+      await this.nftTokenOwnerService.updateERC721NFTTokenOwners(
+        toBeUpdatedOwners,
+        batchSize,
+      );
+      
+      this.logger.log(`Completed token owners batch ${ i / batchSize + 1}`);
+    }
   }
 }
