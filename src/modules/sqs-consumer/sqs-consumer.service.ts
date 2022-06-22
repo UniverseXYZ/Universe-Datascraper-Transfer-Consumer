@@ -30,6 +30,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
   public queue: AWS.SQS;
   public batchSize: number;
   public blocksInterval: number;
+  public source: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -41,15 +42,27 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     const secretAccessKey = this.configService.get('aws.secretAccessKey');
     const batchSize = this.configService.get('mongodb.batchSize');
     const blocksInterval = this.configService.get('queue.blocksInterval');
+    const source = this.configService.get('source');
 
-
-    if (!region || !accessKeyId || !secretAccessKey || !batchSize || !blocksInterval) {
+    if (
+      !region ||
+      !accessKeyId ||
+      !secretAccessKey ||
+      !batchSize ||
+      !blocksInterval
+    ) {
       throw new Error(
         'Initialize AWS queue failed, please check required variables',
       );
     }
+
+    if (source !== 'ARCHIVE' && source !== 'MONITOR') {
+      throw new Error(`SOURCE has invalid value(${source})`);
+    }
+
+    this.source = source;
     this.batchSize = Number(batchSize);
-    this.blocksInterval = blocksInterval;
+    this.blocksInterval = Number(blocksInterval);
 
     AWS.config.update({
       region,
@@ -112,14 +125,20 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
 
     this.logger.log(`Set message id:(${message.MessageId}) as processing`);
 
-    const blockInterval = nftCollectionTask.endBlock - nftCollectionTask.startBlock;
+    const blockInterval =
+      nftCollectionTask.endBlock - nftCollectionTask.startBlock;
 
     if (blockInterval > this.blocksInterval) {
-      this.logger.log(`Block interval is bigger(${blockInterval}) than max allowed(${this.blocksInterval}). Splitting the task into batches...`);
+      this.logger.log(
+        `[${this.source.toLowerCase()} Transfer Flow] Block interval is bigger(${blockInterval}) than max allowed(${
+          this.blocksInterval
+        }). Splitting the task into batches...`,
+      );
 
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
+        source: this.source,
       });
 
       return;
@@ -130,19 +149,19 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       status: MessageStatus.processing,
     });
 
-    this.logger.log(
-      `Getting transfer history for block ${nftCollectionTask.startBlock} - ${nftCollectionTask.endBlock}`,
-    );
-
     const { contractAddress, startBlock, endBlock, tokenType } =
-      receivedMessage;
+      nftCollectionTask;
+
+    this.logger.log(
+      `[${this.source} Transfer Flow] Getting transfer history for block ${startBlock} - ${endBlock}`,
+    );
 
     await this.tokensHandler.start(
       contractAddress,
       startBlock,
       endBlock,
       tokenType,
-      this.batchSize
+      this.batchSize,
     );
   }
 
@@ -189,6 +208,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
+        source: this.source,
       });
     } else {
       //error status

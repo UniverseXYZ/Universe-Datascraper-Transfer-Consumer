@@ -5,4 +5,5 @@ export class CreateNFTCollectionTaskDto {
   endBlock: number;
   status: string;
   errorMessage?: string;
+  source?: string;
 }

@@ -1,7 +1,7 @@
 export default () => ({
   mongodb: {
     uri: process.env.MONGODB_URI,
-    batchSize: process.env.BATCH_SIZE
+    batchSize: process.env.BATCH_SIZE,
   },
   port: process.env.PORT,
   app_env: process.env.APP_ENV,
@@ -23,6 +23,7 @@ export default () => ({
   },
   etherscan_api_key: process.env.ETHERSCAN_API_KEY,
   queue: {
-    blocksInterval: process.env.BLOCKS_INTERVAL
-  }
+    blocksInterval: process.env.BLOCKS_INTERVAL,
+  },
+  source: process.env.SOURCE,
 });
