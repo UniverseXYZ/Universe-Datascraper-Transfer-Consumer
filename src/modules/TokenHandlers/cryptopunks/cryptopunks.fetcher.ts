@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
 import R from 'ramda';
-import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
+import { EthereumService } from 'src/modules/Infra/ethereum/ethereum.service';
 import { handleSizeExceedError } from '../tokens-handler/errors.handler';
 import {
   Token,

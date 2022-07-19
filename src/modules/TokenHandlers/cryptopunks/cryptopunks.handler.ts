@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DalNFTTokenOwnerService } from 'src/modules/Dal/dal-nft-token-owner/dal-nft-token-owner.service';
 import { DalNFTTokensService } from 'src/modules/Dal/dal-nft-token/dal-nft-token.service';
 import { DalNFTTransferHistoryService } from 'src/modules/Dal/dal-nft-transfer-history/dal-nft-transfer-history.service';
-import EthereumService from 'src/modules/Infra/ethereum/ethereum.service';
+import { EthereumService } from 'src/modules/Infra/ethereum/ethereum.service';
 import { Handler } from '../tokens-handler/interfaces/tokens.interface';
 import CryptoPunksTokenAnalyser from './cryptopunks.analyser';
 import CryptoPunksTokenFecther from './cryptopunks.fetcher';
