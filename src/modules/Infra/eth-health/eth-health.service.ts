@@ -4,21 +4,21 @@ import {
   HealthIndicatorResult,
   HealthCheckError,
 } from '@nestjs/terminus';
-import EthereumService from '../ethereum/ethereum.service';
+import { EthereumService } from '../ethereum/ethereum.service';
 import R from 'ramda';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EthHealthIndicator extends HealthIndicator {
   private readonly logger = new Logger(EthereumService.name);
 
-  constructor(private ethService: EthereumService) {
+  constructor(private ethService: EthereumService, private configService: ConfigService) {
     super();
   }
 
   async pingCheck(key: string): Promise<HealthIndicatorResult> {
-    const { ether } = this.ethService;
-    const blockNumber = await ether.getBlockNumber();
-    const network = await ether.getNetwork();
+    const blockNumber = await this.ethService.getBlockNum();
+    const network = this.configService.get('ethereum_network');
     const isHealthy = !R.isNil(blockNumber);
     const result = this.getStatus(key, isHealthy, { blockNumber, network });
 
