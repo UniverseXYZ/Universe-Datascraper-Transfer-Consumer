@@ -22,6 +22,7 @@ import {
   BulkWriteError,
   SizeExceedError,
 } from '../TokenHandlers/tokens-handler/interfaces/tokens.interface';
+import { EthereumService } from '../Infra/ethereum/ethereum.service';
 
 @Injectable()
 export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -36,6 +37,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     private readonly configService: ConfigService,
     private readonly nftCollectionTaskService: DalNFTCollectionTaskService,
     private tokensHandler: TokensHandler,
+    private readonly ethereumService: EthereumService,
   ) {
     const region = this.configService.get('aws.region');
     const accessKeyId = this.configService.get('aws.accessKeyId');
@@ -112,6 +114,11 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async handleMessage(message: AWS.SQS.Message) {
+    if (!this.ethereumService.ether) {
+      this.logger.warn(`[${this.source.toLowerCase()} Transfer Flow] Provider isn't available. Skipping this iteration. Message will be processed again after visibility timeout ends.`);
+      return;
+    }
+
     this.logger.log(`Consumer handle message id:(${message.MessageId})`);
     const receivedMessage = JSON.parse(message.Body) as ReceivedMessage;
 

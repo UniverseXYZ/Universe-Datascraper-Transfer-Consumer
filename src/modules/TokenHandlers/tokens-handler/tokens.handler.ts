@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EthereumService } from 'src/modules/Infra/ethereum/ethereum.service';
 import CryptoPunksTokenHandler from '../cryptopunks/cryptopunks.handler';
 import ERC1155TokenHandler from '../erc1155/erc1155token.handler';
 import ERC721TokenHandler from '../erc721/erc721token.handler';
@@ -12,6 +13,7 @@ export default class TokensHandler {
     private readonly erc721TokenHandler: ERC721TokenHandler,
     private readonly erc1155TokenHandler: ERC1155TokenHandler,
     private readonly cryptoPunksTokenHandler: CryptoPunksTokenHandler,
+    private readonly ethereumService: EthereumService,
   ) {}
 
   async start(
@@ -52,6 +54,10 @@ export default class TokensHandler {
           return;
       }
     } catch (error) {
+      if (error?.error?.reason === 'timeout' || error?.error?.code === 429) {
+        return await this.ethereumService.connectToProvider(() => this.start(contractAddress, startBlock, endBlock, tokenType, batchSize));
+      }
+
       handleDBError(error);
     } finally {
       const endTimestamp = new Date().getTime() / 1000;
