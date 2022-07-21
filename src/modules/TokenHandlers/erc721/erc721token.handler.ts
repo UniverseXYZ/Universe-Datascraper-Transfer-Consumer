@@ -26,7 +26,7 @@ export default class ERC721TokenHandler implements Handler {
     );
   }
 
-  async handle(contractAddress: string, startBlock: number, endBlock: number, batchSize: number) {
+  async handle(contractAddress: string, startBlock: number, endBlock: number, batchSize: number, source: string) {
     // Get ERC721 tranfer history and tokens
     const { tokens, transferHistory } =
       await this.fetcher.getTokensAndTransferHistory(
@@ -43,6 +43,6 @@ export default class ERC721TokenHandler implements Handler {
       batchSize
     );
     await this.analayser.handleOwners(transferHistory, batchSize);
-    await this.analayser.handleUpcomingTokens(tokens, batchSize);
+    await this.analayser.handleUpcomingTokens(tokens, batchSize, source);
   }
 }

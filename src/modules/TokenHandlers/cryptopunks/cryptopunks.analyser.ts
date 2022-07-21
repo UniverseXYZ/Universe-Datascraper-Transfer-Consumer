@@ -19,11 +19,11 @@ export default class CryptoPunksTokenAnalyser implements Analyser {
     private readonly nftTokenOwnerService: DalNFTTokenOwnerService,
   ) {}
 
-  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number) {
+  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number, source: string) {
     this.logger.log(
       `Start handling upcoming ${tokens.length} CryptoPunks tokens`,
     );
-    await this.nftTokensService.upsertNFTTokens(tokens, batchSize);
+    await this.nftTokensService.upsertNFTTokens(tokens, batchSize, source);
   }
 
   async handleOwners(transferHistories: TransferHistory[], batchSize: number) {

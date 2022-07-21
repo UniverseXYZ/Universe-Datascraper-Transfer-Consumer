@@ -21,7 +21,8 @@ export default class TokensHandler {
     startBlock: number,
     endBlock: number,
     tokenType: string,
-    batchSize: number
+    batchSize: number,
+    source: string
   ) {
     const currentTimestamp = new Date().getTime() / 1000;
     try {
@@ -31,7 +32,8 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
-            batchSize
+            batchSize,
+            source,
           );
           break;
         case 'ERC1155':
@@ -39,7 +41,8 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
-            batchSize
+            batchSize,
+            source,
           );
           break;
         case 'CryptoPunks':
@@ -47,7 +50,8 @@ export default class TokensHandler {
             contractAddress,
             startBlock,
             endBlock,
-            batchSize
+            batchSize,
+            source,
           );
           break;
         default:
@@ -55,7 +59,7 @@ export default class TokensHandler {
       }
     } catch (error) {
       if (error?.error?.reason === 'timeout' || error?.error?.code === 429) {
-        return await this.ethereumService.connectToProvider(() => this.start(contractAddress, startBlock, endBlock, tokenType, batchSize));
+        return await this.ethereumService.connectToProvider(() => this.start(contractAddress, startBlock, endBlock, tokenType, batchSize, source));
       }
 
       handleDBError(error);

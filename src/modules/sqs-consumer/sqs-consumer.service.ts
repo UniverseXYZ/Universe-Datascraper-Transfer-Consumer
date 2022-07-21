@@ -169,6 +169,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       endBlock,
       tokenType,
       this.batchSize,
+      this.source
     );
   }
 

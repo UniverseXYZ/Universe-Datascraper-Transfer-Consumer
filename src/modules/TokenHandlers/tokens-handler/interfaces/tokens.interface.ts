@@ -54,12 +54,13 @@ export interface Handler {
     contractAddress: string,
     startBlock: number,
     endBlock: number,
-    batchSize: number
+    batchSize: number, 
+    source: string
   ): Promise<void>;
 }
 
 export interface Analyser {
-  handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number): Promise<void>;
+  handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number, source: string): Promise<void>;
 }
 
 export interface TokenTransferFetcher {

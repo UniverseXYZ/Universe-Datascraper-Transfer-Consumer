@@ -26,7 +26,7 @@ export default class ERC1155TokenHandler implements Handler {
     );
   }
 
-  async handle(contractAddress: string, startBlock: number, endBlock: number, batchSize: number) {
+  async handle(contractAddress: string, startBlock: number, endBlock: number, batchSize: number, source: string) {
     // Get ERC1155 tranfer history and tokens
     const { tokens, transferHistory } =
       await this.fetcher.getTokensAndTransferHistory(
@@ -38,7 +38,7 @@ export default class ERC1155TokenHandler implements Handler {
     this.logger.log(
       `Fetched transfer history(${transferHistory?.length}) and tokens(${tokens.length})`,
     );
-    await this.analayser.handleUpcomingTokens(tokens, batchSize);
+    await this.analayser.handleUpcomingTokens(tokens, batchSize, source);
     await this.nftTransferHistoryService.createERC1155NFTTransferHistoryBatch(
       transferHistory,
       batchSize

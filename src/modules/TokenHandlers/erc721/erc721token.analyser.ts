@@ -19,9 +19,9 @@ export default class ERC721TokenAnalyser implements Analyser {
     private readonly nftTokenOwnerService: DalNFTTokenOwnerService,
   ) {}
 
-  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number) {
+  async handleUpcomingTokens(tokens: CreateNFTTokenDto[], batchSize: number, source: string) {
     this.logger.log(`Start handling upcoming ${tokens.length} ERC721 tokens | Batch size: ${batchSize}`);
-    await this.nftTokensService.upsertNFTTokens(tokens, batchSize);
+    await this.nftTokensService.upsertNFTTokens(tokens, batchSize, source);
   }
 
   async handleOwners(transferHistories: TransferHistory[], batchSize: number) {

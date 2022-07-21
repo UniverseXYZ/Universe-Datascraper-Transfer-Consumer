@@ -12,7 +12,7 @@ export class DalNFTTokensService {
     private readonly nfttokensModel: Model<NFTTokensDocument>,
   ) {}
 
-  async upsertNFTTokens(tokens: CreateNFTTokenDto[], batchSize: number): Promise<void> {
+  async upsertNFTTokens(tokens: CreateNFTTokenDto[], batchSize: number, source: string): Promise<void> {
     this.logger.log(`Bulk write ${tokens.length} tokens | Batch size: ${batchSize}`);
     for (let i = 0; i < tokens.length; i+=batchSize) {
       const tokensBatch = tokens.slice(i, i + batchSize);
@@ -25,6 +25,7 @@ export class DalNFTTokensService {
               contractAddress: x.contractAddress,
               tokenId: x.tokenId,
               tokenType: x.tokenType,
+              source,
             },
             upsert: true,
           },
