@@ -21,7 +21,7 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
   private readonly logger = new Logger(ERC1155TokenFetcher.name);
 
   constructor(private readonly ethereumService: EthereumService) {
-    this.ether = this.ethereumService.ether;
+    this.ether = this.ethereumService.getEther();
   }
 
   async getTokensAndTransferHistory(
@@ -32,6 +32,7 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
     tokens: Token[];
     transferHistory: TransferHistory[];
   }> {
+    this.ether = this.ethereumService.getEther();
     try {
       this.logger.log(
         `Start to get contractAddress(${contractAddress}) in block(${startBlock}-${endBlock})'s transfer history`,
