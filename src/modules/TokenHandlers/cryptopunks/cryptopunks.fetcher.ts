@@ -50,6 +50,10 @@ export default class CryptoPunksTokenFecther implements TokenTransferFetcher {
       return { tokens, transferHistory };
     } catch (error) {
       console.log(error);
+      if (error?.error?.reason === 'timeout' || error?.error?.code === 429) {
+        return await this.ethereumService.connectToProvider(() => this.getTokensAndTransferHistory(contractAddress, startBlock, endBlock));
+      }
+
       this.logger.log(`Error when getting transfer history - ${error}`);
       handleSizeExceedError(error);
     }
