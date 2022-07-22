@@ -32,6 +32,7 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
   public batchSize: number;
   public blocksInterval: number;
   public source: string;
+  public isVip: boolean;
 
   constructor(
     private readonly configService: ConfigService,
@@ -65,6 +66,12 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
     this.source = source;
     this.batchSize = Number(batchSize);
     this.blocksInterval = Number(blocksInterval);
+
+    const queueUrl = this.configService.get('aws.queueUrl');
+
+    if (queueUrl.includes('-vip')) {
+      this.isVip = true;
+    }
 
     AWS.config.update({
       region,
@@ -128,6 +135,8 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       startBlock: receivedMessage.startBlock,
       endBlock: receivedMessage.endBlock,
       tokenType: receivedMessage.tokenType,
+      source: this.source,
+      vip: this.isVip,
     };
 
     this.logger.log(`Set message id:(${message.MessageId}) as processing`);
@@ -145,7 +154,6 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
-        source: this.source,
       });
 
       return;
@@ -207,6 +215,8 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       contractAddress: receivedMessage.contractAddress,
       startBlock: receivedMessage.startBlock,
       endBlock: receivedMessage.endBlock,
+      source: this.source,
+      vip: this.isVip,
     };
 
     if (error instanceof SizeExceedError || error instanceof BulkWriteError) {
@@ -216,7 +226,6 @@ export class SqsConsumerService implements OnModuleInit, OnModuleDestroy {
       await this.nftCollectionTaskService.updateNFTCollectionTask({
         ...nftCollectionTask,
         status: MessageStatus.split,
-        source: this.source,
       });
     } else {
       //error status

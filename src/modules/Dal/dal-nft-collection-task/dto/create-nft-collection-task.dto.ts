@@ -6,4 +6,5 @@ export class CreateNFTCollectionTaskDto {
   status: string;
   errorMessage?: string;
   source?: string;
+  vip?: boolean;
 }
