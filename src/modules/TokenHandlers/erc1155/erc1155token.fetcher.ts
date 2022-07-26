@@ -54,7 +54,7 @@ export default class ERC1155TokenFetcher implements TokenTransferFetcher {
       };
     } catch (error) {
       console.log(error);
-      if (error?.error?.reason === 'timeout' || error?.error?.code === 429) {
+      if (error?.error?.reason === 'timeout' || error?.error?.code === 429 || error?.error?.status === 403 || error?.error?.code === 'TIMEOUT') {
         return await this.ethereumService.connectToProvider(() => this.getTokensAndTransferHistory(contractAddress, startBlock, endBlock));
       }
       this.logger.log(`Error when getting transfer history - ${error}`);

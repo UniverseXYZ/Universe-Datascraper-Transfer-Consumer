@@ -58,7 +58,7 @@ export default class TokensHandler {
           return;
       }
     } catch (error) {
-      if (error?.error?.reason === 'timeout' || error?.error?.code === 429) {
+      if (error?.error?.reason === 'timeout' || error?.error?.code === 429 || error?.error?.status === 403 || error?.error?.code === 'TIMEOUT') {
         return await this.ethereumService.connectToProvider(() => this.start(contractAddress, startBlock, endBlock, tokenType, batchSize, source));
       }
 
